@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import Topbar from '../components/layout/Topbar';
 import ProjectCard from '../components/project/ProjectCard';
@@ -6,8 +6,30 @@ import CreateProjectModal from '../components/sub-project/CreateProjectModal';
 
 export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+  //ฟังก์ชันสำหรับไปดึงข้อมูลโปรเจคจากหลังบ้าน
+  const fetchProjects = async () => {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) return;
+    
+    const user = JSON.parse(storedUser);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/projects/user/${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setProjects(data);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+//ดึงข้อมู,มาแสดงหน้าเว็บเลย
   const handleProjectCreated = () => {
-    window.location.reload(); 
+    fetchProjects(); 
   };
   return (
     <div className="flex min-h-screen bg-[#060411] text-white font-sans overflow-hidden">
@@ -24,8 +46,18 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="flex flex-wrap gap-6">
-                <ProjectCard />
-            </div>
+            {projects.length > 0 ? (
+              projects.map((project) => (
+                // ส่งข้อมูลโปรเจคแต่ละอัน เข้าไปใน Component ProjectCard
+                <ProjectCard key={project.id} project={project} />
+              ))
+            ) : (
+              // ถ้ายังไม่มีโปรเจคเลย ให้โชว์ข้อความนี้
+              <div className="w-full text-center text-gray-500 mt-10">
+                ยังไม่มีโปรเจคเลยครับ กดปุ่ม "สร้าง Project ใหม่ +" เพื่อเริ่มต้นได้เลย!
+              </div>
+            )}
+          </div>
             <CreateProjectModal 
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
