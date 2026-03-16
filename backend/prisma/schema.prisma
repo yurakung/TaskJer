@@ -1,0 +1,37 @@
+// ไฟล์นี้คือหัวใจหลักที่ใช้กำหนดโครงสร้างฐานข้อมูลทั้งหมด
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. เปลี่ยนจาก postgresql เป็น mysql
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 2. สร้างโครงสร้างตาราง User
+model User {
+  id        Int      @id @default(autoincrement()) // รหัสผู้ใช้ (รันเลขอัตโนมัติ)
+  name      String // ชื่อผู้ใช้ (ที่รับมาจากหน้า Register)
+  email     String   @unique // อีเมล (ห้ามซ้ำกัน)
+  password  String // รหัสผ่าน (เดี๋ยวเราจะเข้ารหัสก่อนบันทึก)
+  role      String   @default("user") // สิทธิ์ผู้ใช้งาน เช่น head, vice head, user
+  createdAt DateTime @default(now()) // วันที่สมัครสมาชิก
+  updatedAt DateTime @updatedAt // วันที่อัปเดตข้อมูลล่าสุด
+  projects  Project[]
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String   // ชื่อโปรเจค
+  description String?  // รายละเอียด (มีหรือไม่มีก็ได้)
+  progress    Int      @default(0) // ความคืบหน้า (0-100%)
+  
+  // ส่วนที่ใช้ผูกว่าใครเป็นคนสร้างโปรเจคนี้
+  userId      Int      
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
