@@ -20,4 +20,15 @@ export class ProjectController {
   findOne(@Param('id') id: string) {
     return this.projectService.getProjectById(Number(id));
   }
+  // รับข้อมูล POST /api/projects/1/invite
+  @Post(':id/invite')
+  inviteUser(@Param('id') id: string, @Body() body: { email: string }) {
+    return this.projectService.inviteUser(Number(id), body.email);
+  }
+
+  // รับข้อมูล GET /api/projects/1/members
+  @Get(':id/members')
+  getMembers(@Param('id') id: string) {
+    return this.projectService.getProjectMembers(Number(id));
+  }
 }
