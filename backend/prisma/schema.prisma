@@ -21,6 +21,8 @@ model User {
   updatedAt DateTime @updatedAt // วันที่อัปเดตข้อมูลล่าสุด
   projects  Project[]
   joinedProjects ProjectMember[]
+  assignees   TaskAssignee[]
+  messages    TaskMessage[]
 }
 
 model Project {
@@ -48,6 +50,8 @@ model Task {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  assignees   TaskAssignee[]
+  messages    TaskMessage[]
 }
 
 model ProjectMember {
@@ -63,4 +67,30 @@ model ProjectMember {
 
   // ป้องกันการเชิญคนเดียวกันเข้าโปรเจคเดิมซ้ำ 2 รอบ
   @@unique([projectId, userId]) 
+}
+
+model TaskAssignee {
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  userId    Int
+  
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  // ป้องกันการ Assign คนเดียวกันในงานเดิมซ้ำ
+  @@unique([taskId, userId]) 
+}
+
+model TaskMessage {
+  id        Int      @id @default(autoincrement())
+  text      String?  // ข้อความแชท (อนุญาตให้ว่างได้ถ้าส่งแค่ไฟล์)
+  fileUrl   String?  // ลิงก์รูปภาพ หรือ ไฟล์ (อนุญาตให้ว่างได้ถ้าพิมพ์แค่แชท)
+  
+  taskId    Int
+  userId    Int      // คนที่ส่งแชท/ไฟล์
+  
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
