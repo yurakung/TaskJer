@@ -27,10 +27,22 @@ model Project {
   name        String   // ชื่อโปรเจค
   description String?  // รายละเอียด (มีหรือไม่มีก็ได้)
   progress    Int      @default(0) // ความคืบหน้า (0-100%)
-  
   // ส่วนที่ใช้ผูกว่าใครเป็นคนสร้างโปรเจคนี้
   userId      Int      
   user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tasks       Task[]
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String   // ชื่องานย่อย
+  status      String   @default("todo") // สถานะงาน (เช่น todo, doing, done)
+  
+  // ส่วนที่ผูกว่างานนี้เป็นของโปรเจค ID อะไร
+  projectId   Int
+  project     Project  @relation(fields: [projectId], references: [id])
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
