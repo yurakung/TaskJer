@@ -2,11 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Topbar from '../components/layout/Topbar';
+import CreateTaskModal from '../components/sub-project/CreateTaskModal';
 
 export default function ProjectDetail() {
-  const { id } = useParams(); // 🌟 ดึงเลข ID โปรเจคมาจาก URL (เช่น /project/1 จะได้เลข 1 มา)
+  const { id } = useParams(); 
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/project/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTasks(data);
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
+  };
 
   useEffect(() => {
     if (!id || id === 'undefined') {
@@ -27,6 +42,7 @@ export default function ProjectDetail() {
     };
 
     fetchProjectDetails();
+    fetchTasks();
   }, [id]);
 
   // ระหว่างรอข้อมูลโหลด ให้ขึ้นข้อความนี้ไปก่อน
@@ -63,20 +79,42 @@ export default function ProjectDetail() {
             </p>
           </div>
 
-          {/* พื้นที่สำหรับใส่ Task (งานย่อย) ในอนาคต */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold tracking-wide">งานย่อย (Tasks)</h2>
-            <button className="bg-[#7B5CFF] hover:bg-[#6A4BE5] text-white px-4 py-2 rounded-xl font-bold shadow-lg transition-all">
+            <button 
+              onClick={() => setIsTaskModalOpen(true)}
+              className="bg-[#7B5CFF] hover:bg-[#6A4BE5] text-white px-4 py-2 rounded-xl font-bold shadow-lg transition-all"
+            >
               + สร้างงานย่อย
             </button>
           </div>
-          
+          <div className="flex flex-col gap-4">
+            {tasks.length > 0 ? (
+              tasks.map((task) => (
+                <div key={task.id} className="bg-[#0A0714] border border-[#1C1438] hover:border-[#301C5E] transition-colors rounded-xl p-5 flex justify-between items-center shadow-md">
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 rounded-full bg-[#FFB800]"></div> {/* จุดสีส้มบอกสถานะ todo */}
+                    <h3 className="text-lg font-medium text-gray-200">{task.title}</h3>
+                  </div>
+                  <span className="bg-[#2A1B66] text-[#A68CFF] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                    {task.status}
+                  </span>
+                </div>
+              ))
+          ) : (
           <div className="bg-[#0A0714] border border-[#1C1438] rounded-2xl p-8 text-center text-gray-500">
-            ยังไม่มีงานย่อยในโปรเจคนี้ กดปุ่มสร้างเพื่อเริ่มต้นได้เลย!
+                ยังไม่มีงานย่อยในโปรเจคนี้ กดปุ่มสร้างเพื่อเริ่มต้นได้เลย!
+              </div>
+            )}
           </div>
-
-        </div>
+          <CreateTaskModal 
+            isOpen={isTaskModalOpen} 
+            onClose={() => setIsTaskModalOpen(false)} 
+            onSuccess={fetchTasks} // ถ้าสร้างเสร็จ ให้เรียกฟังก์ชันดึงข้อมูลใหม่
+            projectId={id} // ส่ง ID โปรเจคเข้าไปด้วย
+          />
       </div>
     </div>
+  </div>
   );
 }
