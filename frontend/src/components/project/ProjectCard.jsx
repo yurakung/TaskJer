@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 
 export default function ProjectCard({ project }) {
   const navigate = useNavigate();
+  console.log('หน้าตาข้อมูลโปรเจค:', project);
   if (!project) return null;
   return (
     // เมื่อกดที่การ์ด จะให้เปลี่ยนหน้าไปที่หน้ารายละเอียดโปรเจค (เดี๋ยวเราค่อยไปสร้างหน้านี้กันทีหลัง)
     <div 
-      onClick={() => navigate('/project')}
+      onClick={() => navigate(`/project/${project.id}`)}
       className="w-72 bg-[#0C1438] rounded-xl p-5 border border-[#2A2359] hover:border-[#6B4BFF] hover:shadow-[0_0_15px_rgba(107,75,255,0.2)] transition-all cursor-pointer flex flex-col justify-between"
     >
       {/* ส่วนบน: ชื่อโปรเจค และ จำนวนงานย่อย */}

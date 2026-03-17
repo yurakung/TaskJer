@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import ProjectDetail from './pages/ProjectDetail';
 import Register from './pages/Register';
 
+
 function App() {
   return (
     <BrowserRouter>
@@ -16,6 +17,8 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/project" element={<ProjectDetail />} />
         <Route path="/Register" element={<Register />} />
+
+        <Route path="/project/:id" element={<ProjectDetail />} />
       </Routes>
     </BrowserRouter>
   );

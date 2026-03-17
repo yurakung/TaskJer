@@ -23,4 +23,9 @@ export class ProjectService {
       orderBy: { createdAt: 'desc' }, // เรียงจากอันใหม่สุดขึ้นก่อน
     });
   }
+  async getProjectById(id: number) {
+    return this.prisma.project.findUnique({
+      where: { id: id },
+    });
+  }
 }

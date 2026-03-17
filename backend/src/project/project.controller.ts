@@ -16,4 +16,8 @@ export class ProjectController {
   findByUser(@Param('userId') userId: string) {
     return this.projectService.getProjectsByUser(Number(userId));
   }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.projectService.getProjectById(Number(id));
+  }
 }
