@@ -86,4 +86,65 @@ export class ProjectService {
       }
     });
   }
+
+  async updateMemberRole(projectId: number, targetUserId: number, newRole: string, requesterId: number) {
+    // 1. เช็คว่าคนที่กดเปลี่ยนสิทธิ์ เป็น Owner จริงไหม? (ให้ Owner เปลี่ยนสิทธิ์ได้คนเดียว)
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      return { success: false, message: 'ไม่พบโปรเจคนี้ในระบบครับ' };
+    }
+    if (project.userId !== requesterId) {
+      return { success: false, message: 'คุณไม่มีสิทธิ์! เฉพาะ Owner เท่านั้นที่ตั้ง Vice-Head ได้' };
+    }
+
+    // 2. อัปเดตตำแหน่ง
+    await this.prisma.projectMember.update({
+      where: {
+        projectId_userId: { projectId, userId: targetUserId }
+      },
+      data: { role: newRole }
+    });
+
+    return { success: true, message: `อัปเดตตำแหน่งเป็น ${newRole} เรียบร้อยแล้ว` };
+  }
+
+  async kickMember(projectId: number, targetUserId: number, requesterId: number) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) {
+      return { success: false, message: 'ไม่พบโปรเจคนี้ในระบบครับ' };
+    }
+    
+    // 1. ถ้าคนกดเตะ คือ Owner -> เตะได้ทุกคนเลย ลุย!
+    const isOwner = project.userId === requesterId;
+
+    // 2. ถ้าไม่ใช่ Owner ต้องไปเช็คว่าเป็น Vice-Head ไหม
+    let isViceHead = false;
+    if (!isOwner) {
+      const requesterMember = await this.prisma.projectMember.findUnique({
+        where: { projectId_userId: { projectId, userId: requesterId } }
+      });
+      if (requesterMember && requesterMember.role === 'vice-head') {
+        isViceHead = true;
+      }
+    }
+
+    // 3. กฎเหล็ก: ถ้าไม่ใช่ทั้ง Owner และ Vice-Head -> ห้ามเตะ!
+    if (!isOwner && !isViceHead) {
+      return { success: false, message: 'คุณไม่มีสิทธิ์เตะสมาชิกออกครับ' };
+    }
+
+    // 4. กฎเหล็ก: Vice-Head ห้ามเตะ Owner เด็ดขาด!
+    if (isViceHead && targetUserId === project.userId) {
+      return { success: false, message: 'Vice-Head ไม่สามารถเตะ Owner ออกได้ครับ!' };
+    }
+
+    // 5. ถ้าผ่านกฎทั้งหมด ก็ทำการลบชื่อออกจากโปรเจค
+    await this.prisma.projectMember.delete({
+      where: {
+        projectId_userId: { projectId, userId: targetUserId }
+      }
+    });
+
+    return { success: true, message: 'เตะออกจากโปรเจคเรียบร้อยแล้ว' };
+  }
 }
