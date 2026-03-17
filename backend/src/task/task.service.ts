@@ -20,6 +20,15 @@ export class TaskService {
     return this.prisma.task.findMany({
       where: { projectId: projectId },
       orderBy: { createdAt: 'desc' }, // เรียงอันใหม่ล่าสุดขึ้นก่อน
+      include: { 
+        assignees: {
+          include: {
+            user: {
+              select: { name: true } 
+            }
+          }
+        } 
+      }
     });
   }
   async assignUserToTask(taskId: number, targetUserId: number, requesterId: number) {

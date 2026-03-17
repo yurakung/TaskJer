@@ -5,7 +5,6 @@ export default function ProjectCard({ project }) {
   const navigate = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isOwner = project.userId === currentUser.id;
-  console.log('หน้าตาข้อมูลโปรเจค:', project);
   if (!project) return null;
   return (
     // เมื่อกดที่การ์ด จะให้เปลี่ยนหน้าไปที่หน้ารายละเอียดโปรเจค (เดี๋ยวเราค่อยไปสร้างหน้านี้กันทีหลัง)

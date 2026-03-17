@@ -5,6 +5,7 @@ import Topbar from '../components/layout/Topbar';
 import CreateTaskModal from '../components/sub-project/CreateTaskModal';
 import InviteMemberModal from '../components/sub-project/InviteMemberModal';
 import ManageTeamModal from '../components/sub-project/ManageTeamModal';
+import TaskWorkspaceModal from '../components/sub-project/TaskWorkspaceModal';
 
 export default function ProjectDetail() {
   const { id } = useParams(); 
@@ -15,6 +16,8 @@ export default function ProjectDetail() {
   const [members, setMembers] = useState([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -71,6 +74,12 @@ export default function ProjectDetail() {
       </div>
     );
   }
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isOwner = project?.userId === currentUser.id;
+  const currentUserMember = members.find(m => m.userId === currentUser.id);
+  const isViceHead = currentUserMember?.role === 'vice-head';
+  const isOwnerOrViceHead = isOwner || isViceHead;
+  const currentUserRole = isOwner ? 'owner' : (currentUserMember?.role || 'member');
 
   return (
     <div className="flex min-h-screen bg-[#060411] text-white font-sans overflow-hidden">
@@ -139,18 +148,55 @@ export default function ProjectDetail() {
           </div>
           <div className="flex flex-col gap-4">
             {tasks.length > 0 ? (
-              tasks.map((task) => (
-                <div key={task.id} className="bg-[#0A0714] border border-[#1C1438] hover:border-[#301C5E] transition-colors rounded-xl p-5 flex justify-between items-center shadow-md">
-                  <div className="flex items-center gap-4">
-                    <div className="w-3 h-3 rounded-full bg-[#FFB800]"></div> {/* จุดสีส้มบอกสถานะ todo */}
-                    <h3 className="text-lg font-medium text-gray-200">{task.title}</h3>
+              tasks.map((task) => {
+                // 🌟 เช็คว่าเรามีชื่อในงานย่อยนี้ไหม?
+                const isAssigned = task.assignees?.some(a => a.userId === currentUser.id);
+                // 🌟 มีสิทธิ์เข้าถึงไหม? (เป็น Owner/Vice-Head หรือ ถูก Assign)
+                const canAccess = isOwnerOrViceHead || isAssigned;
+
+                return (
+                  <div 
+                    key={task.id} 
+                    onClick={() => {
+                      if (canAccess) {
+                        setSelectedTaskId(task.id);
+                        setIsWorkspaceOpen(true);
+                      }
+                    }}
+                    // 🌟 ถ้าเข้าไม่ได้ ให้เบลอ (opacity-40) และเอา cursor-pointer ออก
+                    className={`bg-[#0A0714] border border-[#1C1438] transition-all rounded-xl p-5 flex justify-between items-center shadow-md 
+                      ${canAccess ? 'hover:border-[#301C5E] cursor-pointer hover:-translate-y-1' : 'opacity-40 cursor-not-allowed grayscale'}
+                    `}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-3 h-3 rounded-full ${canAccess ? 'bg-[#FFB800]' : 'bg-gray-600'}`}></div>
+                      <h3 className="text-lg font-medium text-gray-200">{task.title}</h3>
+                      
+                      {/* โชว์ป้ายเล็กๆ ว่าเราถูกเชิญเข้างานนี้ */}
+                      {isAssigned && (
+                        <span className="text-[10px] bg-[#7B5CFF]/20 text-[#D1C4FF] px-2 py-1 rounded border border-[#7B5CFF]/30">
+                          ได้รับมอบหมาย
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      {/* รูปโปรไฟล์คนทำ */}
+                      <div className="flex -space-x-2">
+                        {task.assignees?.map(a => (
+                          <div key={a.id} className="w-8 h-8 rounded-full bg-[#301C5E] border border-[#0A0714] flex items-center justify-center text-xs text-white" title={a.user.name}>
+                            {a.user.name.charAt(0).toUpperCase()}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="bg-[#2A1B66] text-[#A68CFF] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                        {task.status}
+                      </span>
+                    </div>
                   </div>
-                  <span className="bg-[#2A1B66] text-[#A68CFF] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                    {task.status}
-                  </span>
-                </div>
-              ))
-          ) : (
+                );
+              })
+            ) : (
           <div className="bg-[#0A0714] border border-[#1C1438] rounded-2xl p-8 text-center text-gray-500">
                 ยังไม่มีงานย่อยในโปรเจคนี้ กดปุ่มสร้างเพื่อเริ่มต้นได้เลย!
               </div>
@@ -174,6 +220,15 @@ export default function ProjectDetail() {
             members={members}
             project={project}
             onSuccess={fetchMembers} // อัปเดตข้อมูลถ้าย้ายตำแหน่ง/เตะสำเร็จ
+          />
+          <TaskWorkspaceModal
+            isOpen={isWorkspaceOpen}
+            onClose={() => setIsWorkspaceOpen(false)}
+            taskId={selectedTaskId}
+            projectMembers={members}
+            currentUserRole={currentUserRole}
+            currentUserId={currentUser.id}
+            onSuccess={fetchTasks}
           />
       </div>
     </div>
