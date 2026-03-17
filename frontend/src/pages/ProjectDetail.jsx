@@ -4,6 +4,7 @@ import Sidebar from '../components/layout/Sidebar';
 import Topbar from '../components/layout/Topbar';
 import CreateTaskModal from '../components/sub-project/CreateTaskModal';
 import InviteMemberModal from '../components/sub-project/InviteMemberModal';
+import ManageTeamModal from '../components/sub-project/ManageTeamModal';
 
 export default function ProjectDetail() {
   const { id } = useParams(); 
@@ -13,6 +14,7 @@ export default function ProjectDetail() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [members, setMembers] = useState([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -116,6 +118,13 @@ export default function ProjectDetail() {
               >
                 +
               </button>
+              {/*ปุ่มตั้งค่าทีม (รูปฟันเฟือง) */}
+              <button 
+                onClick={() => setIsManageTeamModalOpen(true)}
+                className="ml-3 px-4 py-2 bg-[#1C0D33] border border-[#301C5E] hover:border-[#7B5CFF] text-[#A68CFF] hover:text-white rounded-xl text-sm font-bold transition-colors shadow-md"
+              >
+                ⚙️ จัดการทีม
+              </button>
             </div>
           
 
@@ -158,6 +167,13 @@ export default function ProjectDetail() {
             onClose={() => setIsInviteModalOpen(false)} 
             onSuccess={fetchMembers} // ถ้าเชิญเสร็จ ให้โหลดรูปลูกทีมมาใหม่
             projectId={id}
+          />
+          <ManageTeamModal 
+            isOpen={isManageTeamModalOpen} 
+            onClose={() => setIsManageTeamModalOpen(false)} 
+            members={members}
+            project={project}
+            onSuccess={fetchMembers} // อัปเดตข้อมูลถ้าย้ายตำแหน่ง/เตะสำเร็จ
           />
       </div>
     </div>
