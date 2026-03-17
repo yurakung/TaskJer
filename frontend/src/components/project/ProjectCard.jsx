@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 export default function ProjectCard({ project }) {
   const navigate = useNavigate();
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isOwner = project.userId === currentUser.id;
   console.log('หน้าตาข้อมูลโปรเจค:', project);
   if (!project) return null;
   return (
@@ -12,13 +14,28 @@ export default function ProjectCard({ project }) {
       className="w-72 bg-[#0C1438] rounded-xl p-5 border border-[#2A2359] hover:border-[#6B4BFF] hover:shadow-[0_0_15px_rgba(107,75,255,0.2)] transition-all cursor-pointer flex flex-col justify-between"
     >
       {/* ส่วนบน: ชื่อโปรเจค และ จำนวนงานย่อย */}
-      <div className="flex justify-between items-start mb-8">
-        <h3 className="text-white font-medium text-lg truncate pr-2">
-          {project.name}
-        </h3>
-        <span className="bg-[#8A8A8A]/40 text-[10px] px-2.5 py-1 rounded-full text-gray-200 whitespace-nowrap">
-          0 งานย่อย
-        </span>
+      <div>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold text-white truncate pr-4">
+            {project.name}
+          </h3>
+          <span className="bg-[#2A1B66] text-gray-300 text-xs px-3 py-1.5 rounded-full whitespace-nowrap">
+            0 งานย่อย
+          </span>
+        </div>
+        
+        {/* 🌟 แสดงชื่อเจ้าของโปรเจค หรือ ป้ายบอกสถานะ */}
+        <div className="mb-6">
+          {isOwner ? (
+            <span className="text-xs font-medium text-[#7B5CFF] bg-[#1C0D33] px-2 py-1 rounded-md border border-[#301C5E]">
+              👑 โปรเจคของคุณ
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-gray-400">
+              รับเชิญจาก: <span className="text-white">{project.user?.name}</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ส่วนล่าง: หลอดความคืบหน้า (Progress Bar) */}

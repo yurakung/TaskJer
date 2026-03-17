@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/layout/Sidebar';
 import Topbar from '../components/layout/Topbar';
 import CreateTaskModal from '../components/sub-project/CreateTaskModal';
+import InviteMemberModal from '../components/sub-project/InviteMemberModal';
 
 export default function ProjectDetail() {
   const { id } = useParams(); 
@@ -10,6 +11,8 @@ export default function ProjectDetail() {
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [members, setMembers] = useState([]);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -20,6 +23,18 @@ export default function ProjectDetail() {
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
+    }
+  };
+
+  const fetchMembers = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/projects/${id}/members`);
+      if (response.ok) {
+        const data = await response.json();
+        setMembers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
     }
   };
 
@@ -43,6 +58,7 @@ export default function ProjectDetail() {
 
     fetchProjectDetails();
     fetchTasks();
+    fetchMembers();
   }, [id]);
 
   // ระหว่างรอข้อมูลโหลด ให้ขึ้นข้อความนี้ไปก่อน
@@ -78,6 +94,30 @@ export default function ProjectDetail() {
               {project.description || 'ไม่มีคำอธิบายโปรเจค'}
             </p>
           </div>
+          <div className="flex items-center gap-3">
+              <div className="flex -space-x-3">
+                {/* วนลูปโชว์รูปโปรไฟล์คนในทีม */}
+                {members.map((member) => (
+                  <div 
+                    key={member.id} 
+                    className="w-10 h-10 rounded-full border-2 border-[#1C0D33] bg-[#7B5CFF] flex items-center justify-center text-sm font-bold text-white shadow-md cursor-pointer hover:-translate-y-1 transition-transform" 
+                    title={member.user.email} // เอาเมาส์ชี้แล้วขึ้น Email
+                  >
+                    {member.user.name.charAt(0).toUpperCase()}
+                  </div>
+                ))}
+              </div>
+              
+              {/* ปุ่ม + เชิญเพื่อน */}
+              <button 
+                onClick={() => setIsInviteModalOpen(true)}
+                className="w-10 h-10 rounded-full border-2 border-dashed border-[#7B5CFF] text-[#7B5CFF] hover:bg-[#7B5CFF] hover:text-white flex items-center justify-center text-xl transition-colors ml-1"
+                title="เชิญสมาชิกเพิ่ม"
+              >
+                +
+              </button>
+            </div>
+          
 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold tracking-wide">งานย่อย (Tasks)</h2>
@@ -112,6 +152,12 @@ export default function ProjectDetail() {
             onClose={() => setIsTaskModalOpen(false)} 
             onSuccess={fetchTasks} // ถ้าสร้างเสร็จ ให้เรียกฟังก์ชันดึงข้อมูลใหม่
             projectId={id} // ส่ง ID โปรเจคเข้าไปด้วย
+          />
+          <InviteMemberModal 
+            isOpen={isInviteModalOpen} 
+            onClose={() => setIsInviteModalOpen(false)} 
+            onSuccess={fetchMembers} // ถ้าเชิญเสร็จ ให้โหลดรูปลูกทีมมาใหม่
+            projectId={id}
           />
       </div>
     </div>

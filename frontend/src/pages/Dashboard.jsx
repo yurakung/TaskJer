@@ -18,6 +18,7 @@ export default function Dashboard() {
       const response = await fetch(`http://localhost:5000/api/projects/user/${user.id}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("ข้อมูลโปรเจคที่ดึงได้:", data);
         setProjects(data);
       }
     } catch (error) {

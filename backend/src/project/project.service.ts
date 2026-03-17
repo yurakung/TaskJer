@@ -19,8 +19,19 @@ export class ProjectService {
   // ฟังก์ชันดึงโปรเจคทั้งหมดของ User คนนั้นๆ มาแสดง
   async getProjectsByUser(userId: number) {
     return this.prisma.project.findMany({
-      where: { userId: userId },
-      orderBy: { createdAt: 'desc' }, // เรียงจากอันใหม่สุดขึ้นก่อน
+      where: {
+        // 🌟 ต้องมี block OR ตรงนี้นะครับ! มันถึงจะดึงงานที่เพื่อนเชิญมาด้วย
+        OR: [
+          { userId: userId }, // ดึงงานที่สร้างเอง
+          { members: { some: { userId: userId } } } // หรือ งานที่ถูกเชิญ
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: {
+          select: { name: true }
+        }
+      }
     });
   }
   async getProjectById(id: number) {
