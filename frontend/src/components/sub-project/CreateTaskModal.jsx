@@ -2,26 +2,33 @@ import React, { useState } from 'react';
 
 export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId }) {
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [file, setFile] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title) return alert('กรุณากรอกชื่องานย่อย');
+    setIsLoading(true);
 
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('projectId', Number(projectId));
+    if (description.trim()) formData.append('description', description);
+    if (file) formData.append('file', file);
     try {
       // ยิงข้อมูลไปหา NestJS ที่เราเพิ่งสร้างเมื่อกี้
       const response = await fetch('http://localhost:5000/api/tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title: title, 
-          projectId: Number(projectId) // ส่ง ID โปรเจคไปผูกด้วย
-        }),
+        body: formData,
       });
 
       if (response.ok) {
         setTitle('');
+        setDescription('');
+        setFile(null);
         onSuccess(); // เรียกฟังก์ชันโหลดข้อมูลใหม่
         onClose();   // ปิด Modal
       } else {
@@ -30,6 +37,8 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId 
     } catch (error) {
       console.error(error);
       alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+    }finally {
+      setIsLoading(false);
     }
   };
 
@@ -49,6 +58,37 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId 
               placeholder="เช่น ออกแบบหน้า Login, ทำระบบ Database"
               required
             />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">รายละเอียดงาน</label>
+            <textarea 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows="3"
+              className="w-full bg-[#121212] text-white px-4 py-3 rounded-xl border border-[#301C5E] focus:outline-none focus:border-[#7B5CFF] transition-colors"
+              placeholder="พิมพ์อธิบายงานเพิ่มเติม..."
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">ไฟล์อ้างอิง (Reference)</label>
+            <div className="flex flex-col gap-2">
+              <label className="cursor-pointer bg-[#1C0D33] border border-[#301C5E] hover:border-[#7B5CFF] px-4 py-3 rounded-xl text-sm text-[#A68CFF] transition-colors flex items-center justify-center gap-2">
+                📎 {file ? 'เปลี่ยนไฟล์แนบ' : 'คลิกเพื่อเลือกไฟล์'}
+                <input 
+                  type="file" 
+                  onChange={(e) => setFile(e.target.files[0])} 
+                  className="hidden" 
+                />
+              </label>
+              {/* โชว์ชื่อไฟล์ที่เลือก */}
+              {file && (
+                <span className="text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-1.5 rounded-lg border border-[#00FFD1]/20 truncate">
+                  {file.name}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-4 mt-4">

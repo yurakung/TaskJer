@@ -83,13 +83,43 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
       <div className="bg-[#0A0414] border border-[#301C5E] w-full max-w-4xl h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden relative">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#1C0D33] to-[#0A0414] border-b border-[#301C5E] p-6 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-[#A68CFF]">{taskDetail.title}</h2>
-            <span className="text-sm text-gray-400">สถานะ: {taskDetail.status}</span>
+        <div className="bg-gradient-to-r from-[#1C0D33] to-[#0A0414] border-b border-[#301C5E] p-6 flex justify-between items-start">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              <h2 className="text-2xl font-bold text-[#A68CFF]">{taskDetail.title}</h2>
+              <span className="px-3 py-1 bg-[#301C5E] text-xs text-[#D1C4FF] rounded-full uppercase tracking-wider font-bold">
+                {taskDetail.status}
+              </span>
+            </div>
+            {(taskDetail.description || taskDetail.fileUrl) && (
+              <div className="mt-4 bg-[#0A0414] border border-[#301C5E] p-4 rounded-xl max-w-3xl shadow-inner">
+                {taskDetail.description && (
+                  <div className="text-sm text-gray-300 whitespace-pre-wrap mb-3 leading-relaxed">
+                    <span className="text-xs font-bold text-gray-500 block mb-1">รายละเอียดงาน:</span>
+                    {taskDetail.description}
+                  </div>
+                )}
+                
+                {taskDetail.fileUrl && (
+                  <div className="pt-2 border-t border-[#301C5E]/50">
+                    <a 
+                      href={taskDetail.fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center gap-2 text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-2 rounded-lg border border-[#00FFD1]/20 hover:bg-[#00FFD1]/20 hover:scale-105 transition-all"
+                    >
+                      ไฟล์อ้างอิง: {taskDetail.fileName || 'ดาวน์โหลดไฟล์'}
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+            
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl">&times;</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl ml-4 transition-colors">&times;</button>
         </div>
+
+        
 
         <div className="flex flex-1 overflow-hidden">
           {/* ส่วนแชท (ซ้าย) */}

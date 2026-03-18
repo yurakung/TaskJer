@@ -5,15 +5,45 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
 
-
 @Controller('api/tasks')
 export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
-  // รับข้อมูล POST /api/tasks เพื่อสร้างงาน
   @Post()
-  create(@Body() body: { title: string; projectId: number }) {
-    return this.taskService.createTask(body);
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = './uploads';
+        if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath);
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+      }
+    })
+  }))
+  create(
+    @Body('title') title: string,
+    @Body('projectId') projectId: string,
+    @Body('description') description: string,
+    @UploadedFile() file?: any
+  ) {
+    // เช็คกันเหนียว ถ้าไม่มี title ส่งมาแปลว่าหน้าเว็บส่งผิดวิธี
+    if (!title) {
+      return { success: false, message: 'ชื่องานหายไป! กรุณาเช็คการส่งข้อมูลจากหน้าเว็บ' };
+    }
+
+    const fileUrl = file ? `http://localhost:5000/uploads/${file.filename}` : undefined;
+    const fileName = file ? file.originalname : undefined;
+
+    return this.taskService.createTask({
+      title: title,
+      projectId: Number(projectId),
+      description: description,
+      fileUrl: fileUrl,
+      fileName: fileName
+    });
   }
 
   // รับข้อมูล GET /api/tasks/project/5 เพื่อดึงงานของโปรเจค ID 5
@@ -36,7 +66,6 @@ export class TaskController {
     return this.taskService.assignUserToTask(Number(taskId), body.targetUserId, body.requesterId);
   }
 
-  // ส่งแชทหรือส่งงาน -> POST /api/tasks/1/message
   @Post(':taskId/message')
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
@@ -55,7 +84,7 @@ export class TaskController {
   }))
   addMessage(
     @Param('taskId') taskId: string,
-    @Body() body: { userId: number; text?: string;},
+    @Body() body: { userId: number; text?: string; },
     @UploadedFile() file?: any
   ) {
     const fileUrl = file ? `http://localhost:5000/uploads/${file.filename}` : undefined;
