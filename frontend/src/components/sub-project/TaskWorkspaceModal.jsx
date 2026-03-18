@@ -77,6 +77,25 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
       console.error(error);
     }
   };
+  const handleDelete = async () => {
+  if (!window.confirm('คุณแน่ใจใช่ไหมว่าจะลบงานนี้? ข้อมูลแชทและไฟล์ทั้งหมดจะหายไปนะ!')) return;
+
+  try {
+    const response = await fetch(`http://localhost:5000/api/tasks/${taskDetail.id}`, {
+      method: 'DELETE',
+    });
+
+    if (response.ok) {
+      onSuccess(); // สั่งให้หน้าโปรเจคโหลดข้อมูลใหม่
+      onClose();   // ปิดหน้าต่างนี้
+    } else {
+      alert('ลบงานไม่สำเร็จ');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+  }
+};
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-sm">
@@ -116,8 +135,19 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
             )}
             
           </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleDelete}
+              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+              title="ลบงานนี้"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl ml-4 transition-colors">&times;</button>
         </div>
+      </div>
 
         
 

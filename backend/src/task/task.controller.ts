@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile,Delete } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -65,6 +65,10 @@ export class TaskController {
   ) {
     return this.taskService.assignUserToTask(Number(taskId), body.targetUserId, body.requesterId);
   }
+  @Delete(':taskId') // ใช้ Method DELETE
+    deleteTask(@Param('taskId') taskId: string) {
+    return this.taskService.deleteTask(Number(taskId));
+  }
 
   @Post(':taskId/message')
   @UseInterceptors(FileInterceptor('file', {
@@ -91,4 +95,6 @@ export class TaskController {
     const fileName = file ? file.originalname : undefined;
     return this.taskService.addMessage(Number(taskId), body.userId, body.text, fileUrl, fileName);
   }
+
+  
 }
