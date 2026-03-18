@@ -59,6 +59,7 @@ export class TaskController {
     @UploadedFile() file?: any
   ) {
     const fileUrl = file ? `http://localhost:5000/uploads/${file.filename}` : undefined;
-    return this.taskService.addMessage(Number(taskId), body.userId, body.text, fileUrl);
+    const fileName = file ? file.originalname : undefined;
+    return this.taskService.addMessage(Number(taskId), body.userId, body.text, fileUrl, fileName);
   }
 }

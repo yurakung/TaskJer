@@ -69,7 +69,7 @@ export class TaskService {
       return { success: false, message: 'ผู้ใช้งานคนนี้อยู่ในงานย่อยนี้อยู่แล้วครับ' };
     }
   }
-  async addMessage(taskId: number, userId: number, text?: string, fileUrl?: string) {
+  async addMessage(taskId: number, userId: number, text?: string, fileUrl?: string, fileName?: string) {
     // ต้องมีข้อความหรือไฟล์อย่างใดอย่างหนึ่ง ถึงจะส่งได้
     if (!text && !fileUrl) {
       return { success: false, message: 'กรุณาพิมพ์ข้อความหรือแนบไฟล์' };
@@ -80,7 +80,9 @@ export class TaskService {
         taskId: Number(taskId),
         userId: Number(userId), 
         text: text, 
-        fileUrl: fileUrl },
+        fileUrl: fileUrl,
+        fileName: fileName
+      },
       include: { user: { select: { name: true } } } // ดึงชื่อคนส่งมาด้วย
     });
 

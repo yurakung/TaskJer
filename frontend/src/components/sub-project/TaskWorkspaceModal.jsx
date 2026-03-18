@@ -109,7 +109,7 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                             <img src={msg.fileUrl} alt="attachment" className="max-w-full h-auto rounded-lg border border-[#301C5E]/50" />
                           ) : (
                             <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline text-sm hover:text-white flex items-center gap-1">
-                              📎 โหลดไฟล์แนบ
+                              {msg.fileName || 'โหลดไฟล์แนบ'}
                             </a>
                           )}
                         </div>

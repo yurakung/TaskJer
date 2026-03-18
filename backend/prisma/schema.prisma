@@ -86,6 +86,7 @@ model TaskMessage {
   id        Int      @id @default(autoincrement())
   text      String?  // ข้อความแชท (อนุญาตให้ว่างได้ถ้าส่งแค่ไฟล์)
   fileUrl   String?  // ลิงก์รูปภาพ หรือ ไฟล์ (อนุญาตให้ว่างได้ถ้าพิมพ์แค่แชท)
+  fileName  String?
   
   taskId    Int
   userId    Int      // คนที่ส่งแชท/ไฟล์
