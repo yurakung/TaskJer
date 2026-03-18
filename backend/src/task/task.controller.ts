@@ -1,5 +1,9 @@
-import { Controller, Post, Get, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { TaskService } from './task.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import * as fs from 'fs';
 
 
 @Controller('api/tasks')
@@ -34,10 +38,27 @@ export class TaskController {
 
   // ส่งแชทหรือส่งงาน -> POST /api/tasks/1/message
   @Post(':taskId/message')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = './uploads';
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath); 
+        }
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+      }
+    })
+  }))
   addMessage(
     @Param('taskId') taskId: string,
-    @Body() body: { userId: number; text?: string; fileUrl?: string }
+    @Body() body: { userId: number; text?: string;},
+    @UploadedFile() file?: any
   ) {
-    return this.taskService.addMessage(Number(taskId), body.userId, body.text, body.fileUrl);
+    const fileUrl = file ? `http://localhost:5000/uploads/${file.filename}` : undefined;
+    return this.taskService.addMessage(Number(taskId), body.userId, body.text, fileUrl);
   }
 }

@@ -76,7 +76,11 @@ export class TaskService {
     }
 
     const message = await this.prisma.taskMessage.create({
-      data: { taskId, userId, text, fileUrl },
+      data: { 
+        taskId: Number(taskId),
+        userId: Number(userId), 
+        text: text, 
+        fileUrl: fileUrl },
       include: { user: { select: { name: true } } } // ดึงชื่อคนส่งมาด้วย
     });
 

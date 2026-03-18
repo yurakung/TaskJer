@@ -4,6 +4,7 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
   const [taskDetail, setTaskDetail] = useState(null);
   const [message, setMessage] = useState('');
   const [selectedUser, setSelectedUser] = useState('');
+  const [file, setFile] = useState(null);
 
   const fetchTaskDetail = async () => {
     try {
@@ -25,19 +26,33 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
   // ส่งแชท
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() && !file) return;
+
+    // 1. จัดของลงกล่องพัสดุ
+    const formData = new FormData();
+    formData.append('userId', currentUserId);
+    if (message.trim()) formData.append('text', message);
+    if (file) formData.append('file', file);
+
     try {
       const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/message`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUserId, text: message }),
+        // ✅ 2. ลบ headers ออก และเปลี่ยน body ให้ส่งกล่อง formData ไปเลยแบบนี้ครับ!
+        body: formData, 
       });
+      
       if (res.ok) {
         setMessage('');
+        setFile(null); // ล้างไฟล์ที่เลือกไว้
+        document.getElementById('file-upload').value = ''; // ล้างค่าใน input
         fetchTaskDetail(); // โหลดแชทใหม่
+      } else {
+        const errorData = await res.json();
+        alert(`ส่งไม่สำเร็จ: ${errorData.message}`);
       }
     } catch (error) {
       console.error(error);
+      alert("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้");
     }
   };
 
@@ -87,7 +102,18 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                   <div key={msg.id} className={`flex ${msg.userId === currentUserId ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-xl p-3 ${msg.userId === currentUserId ? 'bg-[#7B5CFF] text-white rounded-br-none' : 'bg-[#1C0D33] text-gray-200 border border-[#301C5E] rounded-bl-none'}`}>
                       <p className="text-xs text-[#D1C4FF] mb-1 font-bold">{msg.user.name}</p>
-                      <p>{msg.text}</p>
+                      {msg.text && <p>{msg.text}</p>}
+                      {msg.fileUrl && (
+                        <div className="mt-2">
+                          {msg.fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) != null ? (
+                            <img src={msg.fileUrl} alt="attachment" className="max-w-full h-auto rounded-lg border border-[#301C5E]/50" />
+                          ) : (
+                            <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline text-sm hover:text-white flex items-center gap-1">
+                              📎 โหลดไฟล์แนบ
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -106,6 +132,19 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
               <button type="submit" className="bg-[#6B4BFF] hover:bg-[#5A3EE0] text-white px-6 py-3 rounded-xl font-bold transition-all">
                 ส่ง
               </button>
+              <div className="flex items-center gap-2 px-2">
+                <label className="text-xs text-gray-400 cursor-pointer hover:text-[#A68CFF] transition-colors flex items-center gap-1">
+                  📎 แนบไฟล์/รูปภาพ
+                  <input 
+                    type="file" 
+                    id="file-upload" 
+                    onChange={(e) => setFile(e.target.files[0])} 
+                    className="hidden" // ซ่อน input จริงไว้
+                  />
+                </label>
+                {/* โชว์ชื่อไฟล์ที่เลือก */}
+                {file && <span className="text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-2 py-1 rounded border border-[#00FFD1]/20 truncate max-w-[200px]">{file.name}</span>}
+              </div>
             </form>
           </div>
 
