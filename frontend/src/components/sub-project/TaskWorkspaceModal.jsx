@@ -94,7 +94,7 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
             {(taskDetail.description || taskDetail.fileUrl) && (
               <div className="mt-4 bg-[#0A0414] border border-[#301C5E] p-4 rounded-xl max-w-3xl shadow-inner">
                 {taskDetail.description && (
-                  <div className="text-sm text-gray-300 whitespace-pre-wrap mb-3 leading-relaxed">
+                  <div className="text-sm text-gray-300 whitespace-pre-wrap break-words mb-3 leading-relaxed">
                     <span className="text-xs font-bold text-gray-500 block mb-1">รายละเอียดงาน:</span>
                     {taskDetail.description}
                   </div>
