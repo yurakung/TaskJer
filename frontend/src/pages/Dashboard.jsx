@@ -62,7 +62,7 @@ export default function Dashboard() {
             <CreateProjectModal 
             isOpen={isModalOpen} 
             onClose={() => setIsModalOpen(false)} 
-            onSuccess={() => fetchProjectData()}
+            onSuccess={() => fetchProjects()}
           />
         </div>
       </div>
