@@ -50,4 +50,18 @@ export class ProjectController {
   ) {
     return this.projectService.kickMember(Number(projectId), Number(userId), body.requesterId);
   }
+
+  @Patch(':id')
+  updateProject(
+    @Param('id') id: string,
+    @Body() body: { name?: string; description?: string }
+  ) {
+    return this.projectService.updateProject(Number(id), body);
+  }
+
+  // 🌟 API สำหรับลบโปรเจค -> DELETE /api/projects/5
+  @Delete(':id')
+  deleteProject(@Param('id') id: string) {
+    return this.projectService.deleteProject(Number(id));
+  }
 }

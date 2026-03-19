@@ -147,4 +147,20 @@ export class ProjectService {
 
     return { success: true, message: 'เตะออกจากโปรเจคเรียบร้อยแล้ว' };
   }
+
+  async updateProject(id: number, data: { name?: string; description?: string }) {
+    return this.prisma.project.update({
+      where: { id },
+      data: {
+        name: data.name,
+        description: data.description,
+      },
+    });
+  }
+
+  async deleteProject(id: number) {
+    return this.prisma.project.delete({
+      where: { id },
+    });
+  }
 }

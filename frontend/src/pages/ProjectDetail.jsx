@@ -6,6 +6,7 @@ import CreateTaskModal from '../components/sub-project/CreateTaskModal';
 import InviteMemberModal from '../components/sub-project/InviteMemberModal';
 import ManageTeamModal from '../components/sub-project/ManageTeamModal';
 import TaskWorkspaceModal from '../components/sub-project/TaskWorkspaceModal';
+import ProjectSettingsModal from '../components/project/ProjectSettingsModal';
 
 export default function ProjectDetail() {
   const { id } = useParams(); 
@@ -18,6 +19,7 @@ export default function ProjectDetail() {
   const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -170,6 +172,14 @@ export default function ProjectDetail() {
               >
                 ⚙️ จัดการทีม
               </button>
+              {isOwnerOrViceHead && (
+                <button 
+                  onClick={() => setIsSettingsModalOpen(true)}
+                  className="ml-2 px-4 py-2 bg-[#1C0D33] border border-[#301C5E] hover:border-gray-400 text-gray-300 hover:text-white rounded-xl text-sm font-bold transition-colors shadow-md"
+                >
+                  ⚙️ ตั้งค่าโปรเจค
+                </button>
+              )}
             </div>
 
           <div className="flex justify-between items-center mb-6">
@@ -290,6 +300,15 @@ export default function ProjectDetail() {
             currentUserRole={currentUserRole}
             currentUserId={currentUser.id}
             onSuccess={fetchTasks}
+          />
+          <ProjectSettingsModal 
+            isOpen={isSettingsModalOpen}
+            onClose={() => setIsSettingsModalOpen(false)}
+            project={project}
+            onSuccess={() => {
+              // สมมติว่าใน useEffect คุณดึงข้อมูลด้วย fetchProjectDetails เราจะเรียกมันอีกรอบเพื่ออัปเดตชื่อ
+              window.location.reload(); // หรือง่ายสุดคือสั่งให้หน้าเว็บโหลดใหม่เพื่อดึงชื่อล่าสุดมาโชว์
+            }}
           />
         </div>
       </div>
