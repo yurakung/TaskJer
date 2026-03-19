@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile,Delete } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile, Delete, Query } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -29,7 +29,6 @@ export class TaskController {
     @Body('description') description: string,
     @UploadedFile() file?: any
   ) {
-    // เช็คกันเหนียว ถ้าไม่มี title ส่งมาแปลว่าหน้าเว็บส่งผิดวิธี
     if (!title) {
       return { success: false, message: 'ชื่องานหายไป! กรุณาเช็คการส่งข้อมูลจากหน้าเว็บ' };
     }
@@ -46,7 +45,6 @@ export class TaskController {
     });
   }
 
-  // รับข้อมูล GET /api/tasks/project/5 เพื่อดึงงานของโปรเจค ID 5
   @Get('project/:projectId')
   findByProject(@Param('projectId') projectId: string) {
     return this.taskService.getTasksByProject(Number(projectId));
@@ -57,7 +55,6 @@ export class TaskController {
     return this.taskService.getTaskDetail(Number(taskId));
   }
 
-  // มอบหมายงาน (Assign) -> POST /api/tasks/1/assign
   @Post(':taskId/assign')
   assignUser(
     @Param('taskId') taskId: string,
@@ -65,9 +62,19 @@ export class TaskController {
   ) {
     return this.taskService.assignUserToTask(Number(taskId), body.targetUserId, body.requesterId);
   }
-  @Delete(':taskId') // ใช้ Method DELETE
-    deleteTask(@Param('taskId') taskId: string) {
+
+  @Delete(':taskId')
+  deleteTask(@Param('taskId') taskId: string) {
     return this.taskService.deleteTask(Number(taskId));
+  }
+
+  @Delete(':taskId/assign/:userId')
+  async removeAssignee(
+    @Param('taskId') taskId: string,
+    @Param('userId') userId: string,
+    @Query('requesterId') requesterId: string 
+  ) {
+    return this.taskService.removeAssignee(Number(taskId), Number(userId), Number(requesterId));
   }
 
   @Post(':taskId/message')
@@ -95,6 +102,4 @@ export class TaskController {
     const fileName = file ? file.originalname : undefined;
     return this.taskService.addMessage(Number(taskId), body.userId, body.text, fileUrl, fileName);
   }
-
-  
 }

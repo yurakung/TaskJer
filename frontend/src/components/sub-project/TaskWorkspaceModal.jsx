@@ -96,6 +96,29 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
     alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
   }
 };
+  const handleRemoveAssignee = async (targetUserId) => {
+    if (!window.confirm('คุณแน่ใจหรือไม่ที่จะเตะผู้รับผิดชอบคนนี้ออก?')) return;
+
+    let requesterId = currentUserId; 
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskDetail.id}/assign/${targetUserId}?requesterId=${requesterId}`, {
+        method: 'DELETE',
+      });
+      
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        fetchTaskDetail();
+        onSuccess(); // โหลดข้อมูลใหม่ (ชื่อจะหายไป)
+      } else {
+        alert(result.message || 'คุณไม่มีสิทธิ์เตะผู้ใช้งานคนนี้');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+    }
+  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/80 backdrop-blur-sm">
@@ -217,11 +240,23 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                   <p className="text-sm text-gray-500">ยังไม่มีคนรับผิดชอบ</p>
                 ) : (
                   taskDetail.assignees.map(a => (
-                    <div key={a.id} className="flex items-center gap-2 text-sm text-gray-300 bg-[#1C0D33] p-2 rounded-lg border border-[#301C5E]">
-                      <div className="w-6 h-6 rounded-full bg-[#7B5CFF] flex items-center justify-center text-xs text-white font-bold">
-                        {a.user.name.charAt(0).toUpperCase()}
+                    <div key={a.id} className="flex justify-between items-center gap-2 text-sm text-gray-300 bg-[#1C0D33] p-2 rounded-lg border border-[#301C5E] group transition-colors hover:border-[#7B5CFF]/50">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <div className="w-6 h-6 shrink-0 rounded-full bg-[#7B5CFF] flex items-center justify-center text-xs text-white font-bold">
+                          {a.user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="truncate" title={a.user.name}>{a.user.name}</span>
                       </div>
-                      <span className="truncate">{a.user.name}</span>
+                      <button 
+                        onClick={() => handleRemoveAssignee(a.user.id)}
+                        className="text-red-500 hover:text-white hover:bg-red-500 w-6 h-6 shrink-0 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+                        title="เตะออกจากงาน"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      
                     </div>
                   ))
                 )}

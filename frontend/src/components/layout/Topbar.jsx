@@ -45,12 +45,12 @@ export default function Topbar() {
 
         ) : (
           <>
-            <a href="/login" className="text-gray-400 hover:text-white transition-colors tracking-wide text-sm font-medium cursor-pointer">
+            {/* <a href="/login" className="text-gray-400 hover:text-white transition-colors tracking-wide text-sm font-medium cursor-pointer">
               LOGIN
             </a>
             <a href="/register" className="bg-[#D9D9D9] hover:bg-white text-black px-4 py-1.5 rounded-full font-bold flex items-center gap-1 transition-transform hover:scale-105 shadow-lg cursor-pointer">
               Register <span className="text-xl leading-none mb-0.5">+</span>
-            </a>
+            </a> */}
           </>
         )}
 

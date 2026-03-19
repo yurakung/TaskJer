@@ -110,5 +110,33 @@ export class TaskService {
       where: { id: taskId}
     })
   }
+  async removeAssignee(taskId: number, targetUserId: number, requesterId: number) {
+    const task = await this.prisma.task.findUnique({
+      where: { id : taskId},
+      include: {project: true}
+    });
+    if (!task) return { success: false, message:'ไม่พบงานนี้'};
+    
+    const isOwner =task.project.userId ==requesterId;
+
+    const member = await this.prisma.projectMember.findUnique({
+      where: {
+        projectId_userId: { projectId: task.projectId, userId: requesterId }
+      }
+    });
+    
+    const isViceHead = member?.role === 'vice-head' || member?.role === 'vice head' || member?.role === 'head';
+    
+    if (!isOwner && !isViceHead) {
+      return { success: false, message: 'คุณไม่มีสิทธิ์! (ต้องเป็นหัวหน้าหรือรองหัวหน้าเท่านั้น)' };
+    }
+    await this.prisma.taskAssignee.delete({
+      where: {
+        taskId_userId: { taskId: taskId, userId: targetUserId }
+      }
+    });
+    return {success: true, message: 'นำออกเรียบร้อย'};
+    }
+
 }
 
