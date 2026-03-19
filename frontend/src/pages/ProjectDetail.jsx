@@ -27,6 +27,17 @@ export default function ProjectDetail() {
   const isOwnerOrViceHead = isOwner || isViceHead;
   const currentUserRole = isOwner ? 'owner' : (currentUserMember?.role || 'member');
 
+  const allMembersWithOwner = [...members];
+  if (project && !allMembersWithOwner.some(m => m.userId === project.userId)) {
+    allMembersWithOwner.unshift({
+      userId: project.userId,
+      role: 'Owner',
+      user: { 
+        name: isOwner ? `${currentUser.name} (ฉัน)` : 'Project Owner' 
+      }
+    });
+  }
+
   const sortedTasks = [...tasks].sort((a, b) => {
     // 1. เช็คว่างานนี้เป็นของเราไหม
     const isAAssigned = a.assignees?.some(assignee => assignee.userId === currentUser.id);
@@ -314,7 +325,7 @@ export default function ProjectDetail() {
             isOpen={isWorkspaceOpen}
             onClose={() => setIsWorkspaceOpen(false)}
             taskId={selectedTaskId}
-            projectMembers={members}
+            projectMembers={allMembersWithOwner}
             currentUserRole={currentUserRole}
             currentUserId={currentUser.id}
             onSuccess={fetchTasks}

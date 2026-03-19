@@ -23,6 +23,7 @@ model User {
   joinedProjects ProjectMember[]
   assignees   TaskAssignee[]
   messages    TaskMessage[]
+  avatarUrl String?
 }
 
 model Project {
