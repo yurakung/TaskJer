@@ -66,7 +66,6 @@ export default function ProjectDetail() {
     fetchMembers();
   }, [id]);
 
-  // ระหว่างรอข้อมูลโหลด ให้ขึ้นข้อความนี้ไปก่อน
   if (!project) {
     return (
       <div className="flex min-h-screen bg-[#060411] text-white items-center justify-center">
@@ -74,12 +73,51 @@ export default function ProjectDetail() {
       </div>
     );
   }
+
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isOwner = project?.userId === currentUser.id;
   const currentUserMember = members.find(m => m.userId === currentUser.id);
   const isViceHead = currentUserMember?.role === 'vice-head';
   const isOwnerOrViceHead = isOwner || isViceHead;
   const currentUserRole = isOwner ? 'owner' : (currentUserMember?.role || 'member');
+
+  // 🌟 ส่วนประกอบการ์ดงาน (TaskCard) สำหรับใช้ในแต่ละคอลัมน์
+  const TaskCard = ({ task }) => {
+    // ลอจิกการเข้าถึงของคุณ
+    const isAssigned = task.assignees?.some(a => a.userId === currentUser.id);
+    const canAccess = isOwnerOrViceHead || isAssigned;
+
+    return (
+      <div 
+        onClick={() => {
+          if (canAccess) {
+            setSelectedTaskId(task.id);
+            setIsWorkspaceOpen(true);
+          }
+        }}
+        className={`bg-[#1C0D33] p-6 rounded-xl border border-[#301C5E] transition-all flex flex-col min-h-[160px] 
+          ${canAccess ? 'group cursor-pointer hover:border-[#7B5CFF]/50 hover:-translate-y-1 shadow-[0_4px_10px_rgba(0,0,0,0.4)]' : 'opacity-40 cursor-not-allowed grayscale'}
+        `}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <p className="text-lg font-bold text-white group-hover:text-[#A68CFF] break-words line-clamp-3 leading-snug">
+            {task.title}
+          </p>
+          {/* ป้ายได้รับมอบหมาย */}
+          {isAssigned && (
+            <span className="text-[10px] bg-[#7B5CFF]/20 text-[#D1C4FF] px-2 py-1 rounded border border-[#7B5CFF]/30 shrink-0 ml-2">
+              ได้รับมอบหมาย
+            </span>
+          )}
+        </div>
+        
+        {/* ชื่อคนรับผิดชอบ */}
+        <div className="flex justify-between items-center text-xs text-gray-400 mt-auto pt-4 border-t border-[#301C5E]/50">
+          <span>Assigned to: {task.assignees?.[0]?.user?.name || 'None'}</span>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-[#060411] text-white font-sans overflow-hidden">
@@ -105,21 +143,20 @@ export default function ProjectDetail() {
               {project.description || 'ไม่มีคำอธิบายโปรเจค'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 mb-10">
               <div className="flex -space-x-3">
-                {/* วนลูปโชว์รูปโปรไฟล์คนในทีม */}
                 {members.map((member) => (
                   <div 
                     key={member.id} 
                     className="w-10 h-10 rounded-full border-2 border-[#1C0D33] bg-[#7B5CFF] flex items-center justify-center text-sm font-bold text-white shadow-md cursor-pointer hover:-translate-y-1 transition-transform" 
-                    title={member.user.email} // เอาเมาส์ชี้แล้วขึ้น Email
+                    title={member.user.email} 
                   >
                     {member.user.name.charAt(0).toUpperCase()}
                   </div>
                 ))}
               </div>
               
-              {/* ปุ่ม + เชิญเพื่อน */}
               <button 
                 onClick={() => setIsInviteModalOpen(true)}
                 className="w-10 h-10 rounded-full border-2 border-dashed border-[#7B5CFF] text-[#7B5CFF] hover:bg-[#7B5CFF] hover:text-white flex items-center justify-center text-xl transition-colors ml-1"
@@ -127,7 +164,6 @@ export default function ProjectDetail() {
               >
                 +
               </button>
-              {/*ปุ่มตั้งค่าทีม (รูปฟันเฟือง) */}
               <button 
                 onClick={() => setIsManageTeamModalOpen(true)}
                 className="ml-3 px-4 py-2 bg-[#1C0D33] border border-[#301C5E] hover:border-[#7B5CFF] text-[#A68CFF] hover:text-white rounded-xl text-sm font-bold transition-colors shadow-md"
@@ -135,10 +171,9 @@ export default function ProjectDetail() {
                 ⚙️ จัดการทีม
               </button>
             </div>
-          
 
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold tracking-wide">งานย่อย (Tasks)</h2>
+            <h2 className="text-2xl font-bold tracking-wide">Sub-Project</h2>
             <button 
               onClick={() => setIsTaskModalOpen(true)}
               className="bg-[#7B5CFF] hover:bg-[#6A4BE5] text-white px-4 py-2 rounded-xl font-bold shadow-lg transition-all"
@@ -146,13 +181,39 @@ export default function ProjectDetail() {
               + สร้างงานย่อย
             </button>
           </div>
+
+          {/* 🌟 กระดาน Kanban Board 3 คอลัมน์ */}
           <div className="flex flex-col gap-4">
             {tasks.length > 0 ? (
               tasks.map((task) => {
-                // 🌟 เช็คว่าเรามีชื่อในงานย่อยนี้ไหม?
                 const isAssigned = task.assignees?.some(a => a.userId === currentUser.id);
-                // 🌟 มีสิทธิ์เข้าถึงไหม? (เป็น Owner/Vice-Head หรือ ถูก Assign)
                 const canAccess = isOwnerOrViceHead || isAssigned;
+
+                // 🌟 ตั้งค่าตัวแปรสีตามสถานะงาน (แดง / เหลือง / เขียว)
+                let dotColor = 'bg-gray-600';
+                let statusBg = 'bg-[#2A1B66]';
+                let statusTextClass = 'text-[#A68CFF]';
+                let statusLabel = task.status;
+
+                if (task.status === 'done') {
+                  dotColor = 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]';
+                  statusBg = 'bg-green-900 border border-green-500/50';
+                  statusTextClass = 'text-green-300';
+                  statusLabel = 'FINISH';
+                } else if (task.status === 'doing') {
+                  dotColor = 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
+                  statusBg = 'bg-yellow-900 border border-yellow-500/50';
+                  statusTextClass = 'text-yellow-300';
+                  statusLabel = 'ON-PROCESS';
+                } else if (task.status === 'todo') {
+                  dotColor = 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]';
+                  statusBg = 'bg-red-900 border border-red-500/50';
+                  statusTextClass = 'text-red-300';
+                  statusLabel = 'UNPROCESS';
+                }
+
+                // ถ้าไม่มีสิทธิ์เข้าถึง ดรอปสีจุดให้เป็นสีเทา
+                if (!canAccess) dotColor = 'bg-gray-600';
 
                 return (
                   <div 
@@ -163,16 +224,15 @@ export default function ProjectDetail() {
                         setIsWorkspaceOpen(true);
                       }
                     }}
-                    // 🌟 ถ้าเข้าไม่ได้ ให้เบลอ (opacity-40) และเอา cursor-pointer ออก
                     className={`bg-[#0A0714] border border-[#1C1438] transition-all rounded-xl p-5 flex justify-between items-center shadow-md 
                       ${canAccess ? 'hover:border-[#301C5E] cursor-pointer hover:-translate-y-1' : 'opacity-40 cursor-not-allowed grayscale'}
                     `}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${canAccess ? 'bg-[#FFB800]' : 'bg-gray-600'}`}></div>
+                      {/* 🌟 จุดสี (เปลี่ยนตามสถานะอัตโนมัติ) */}
+                      <div className={`w-3 h-3 rounded-full ${dotColor}`}></div>
                       <h3 className="text-lg font-medium text-gray-200">{task.title}</h3>
                       
-                      {/* โชว์ป้ายเล็กๆ ว่าเราถูกเชิญเข้างานนี้ */}
                       {isAssigned && (
                         <span className="text-[10px] bg-[#7B5CFF]/20 text-[#D1C4FF] px-2 py-1 rounded border border-[#7B5CFF]/30">
                           ได้รับมอบหมาย
@@ -181,7 +241,6 @@ export default function ProjectDetail() {
                     </div>
                     
                     <div className="flex items-center gap-4">
-                      {/* รูปโปรไฟล์คนทำ */}
                       <div className="flex -space-x-2">
                         {task.assignees?.map(a => (
                           <div key={a.id} className="w-8 h-8 rounded-full bg-[#301C5E] border border-[#0A0714] flex items-center justify-center text-xs text-white" title={a.user.name}>
@@ -189,29 +248,31 @@ export default function ProjectDetail() {
                           </div>
                         ))}
                       </div>
-                      <span className="bg-[#2A1B66] text-[#A68CFF] text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                        {task.status}
+                      {/* 🌟 ป้ายสถานะ (เปลี่ยนสีและคำตามสถานะอัตโนมัติ) */}
+                      <span className={`${statusBg} ${statusTextClass} text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider min-w-[110px] text-center`}>
+                        {statusLabel}
                       </span>
                     </div>
                   </div>
                 );
               })
             ) : (
-          <div className="bg-[#0A0714] border border-[#1C1438] rounded-2xl p-8 text-center text-gray-500">
+              <div className="bg-[#0A0714] border border-[#1C1438] rounded-2xl p-8 text-center text-gray-500">
                 ยังไม่มีงานย่อยในโปรเจคนี้ กดปุ่มสร้างเพื่อเริ่มต้นได้เลย!
               </div>
             )}
           </div>
+
           <CreateTaskModal 
             isOpen={isTaskModalOpen} 
             onClose={() => setIsTaskModalOpen(false)} 
-            onSuccess={fetchTasks} // ถ้าสร้างเสร็จ ให้เรียกฟังก์ชันดึงข้อมูลใหม่
-            projectId={id} // ส่ง ID โปรเจคเข้าไปด้วย
+            onSuccess={fetchTasks} 
+            projectId={id} 
           />
           <InviteMemberModal 
             isOpen={isInviteModalOpen} 
             onClose={() => setIsInviteModalOpen(false)} 
-            onSuccess={fetchMembers} // ถ้าเชิญเสร็จ ให้โหลดรูปลูกทีมมาใหม่
+            onSuccess={fetchMembers} 
             projectId={id}
           />
           <ManageTeamModal 
@@ -219,7 +280,7 @@ export default function ProjectDetail() {
             onClose={() => setIsManageTeamModalOpen(false)} 
             members={members}
             project={project}
-            onSuccess={fetchMembers} // อัปเดตข้อมูลถ้าย้ายตำแหน่ง/เตะสำเร็จ
+            onSuccess={fetchMembers} 
           />
           <TaskWorkspaceModal
             isOpen={isWorkspaceOpen}
@@ -230,8 +291,8 @@ export default function ProjectDetail() {
             currentUserId={currentUser.id}
             onSuccess={fetchTasks}
           />
+        </div>
       </div>
     </div>
-  </div>
   );
 }

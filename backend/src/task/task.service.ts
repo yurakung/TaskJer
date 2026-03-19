@@ -137,6 +137,13 @@ export class TaskService {
     });
     return {success: true, message: 'นำออกเรียบร้อย'};
     }
+  
+  async updateTaskStatus(taskId: number, status: string) {
+    return this.prisma.task.update({
+      where: { id: taskId },
+      data: { status: status },
+    });
+  }
 
 }
 

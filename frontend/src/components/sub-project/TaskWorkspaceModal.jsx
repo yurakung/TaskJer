@@ -15,6 +15,26 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
     }
   };
 
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        fetchTaskDetail(); 
+        onSuccess();       
+      } else {
+        alert('เปลี่ยนสถานะไม่สำเร็จ');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    }
+  };
+
   useEffect(() => {
     if (isOpen && taskId) fetchTaskDetail();
   }, [isOpen, taskId]);
@@ -23,12 +43,10 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
 
   const isOwnerOrViceHead = currentUserRole === 'owner' || currentUserRole === 'vice-head';
 
-  // ส่งแชท
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim() && !file) return;
 
-    // 1. จัดของลงกล่องพัสดุ
     const formData = new FormData();
     formData.append('userId', currentUserId);
     if (message.trim()) formData.append('text', message);
@@ -37,15 +55,14 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
     try {
       const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/message`, {
         method: 'POST',
-        // ✅ 2. ลบ headers ออก และเปลี่ยน body ให้ส่งกล่อง formData ไปเลยแบบนี้ครับ!
         body: formData, 
       });
       
       if (res.ok) {
         setMessage('');
-        setFile(null); // ล้างไฟล์ที่เลือกไว้
-        document.getElementById('file-upload').value = ''; // ล้างค่าใน input
-        fetchTaskDetail(); // โหลดแชทใหม่
+        setFile(null); 
+        document.getElementById('file-upload').value = ''; 
+        fetchTaskDetail(); 
       } else {
         const errorData = await res.json();
         alert(`ส่งไม่สำเร็จ: ${errorData.message}`);
@@ -56,7 +73,6 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
     }
   };
 
-  // มอบหมายงาน
   const handleAssign = async () => {
     if (!selectedUser) return;
     try {
@@ -68,8 +84,8 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
       const data = await res.json();
       if (data.success) {
         setSelectedUser('');
-        fetchTaskDetail(); // โหลดรายชื่อใหม่
-        onSuccess(); // อัปเดตหน้าหลักด้วย
+        fetchTaskDetail(); 
+        onSuccess(); 
       } else {
         alert(data.message);
       }
@@ -77,25 +93,27 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
       console.error(error);
     }
   };
+
   const handleDelete = async () => {
-  if (!window.confirm('คุณแน่ใจใช่ไหมว่าจะลบงานนี้? ข้อมูลแชทและไฟล์ทั้งหมดจะหายไปนะ!')) return;
+    if (!window.confirm('คุณแน่ใจใช่ไหมว่าจะลบงานนี้? ข้อมูลแชทและไฟล์ทั้งหมดจะหายไปนะ!')) return;
 
-  try {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskDetail.id}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await fetch(`http://localhost:5000/api/tasks/${taskDetail.id}`, {
+        method: 'DELETE',
+      });
 
-    if (response.ok) {
-      onSuccess(); // สั่งให้หน้าโปรเจคโหลดข้อมูลใหม่
-      onClose();   // ปิดหน้าต่างนี้
-    } else {
-      alert('ลบงานไม่สำเร็จ');
+      if (response.ok) {
+        onSuccess(); 
+        onClose();   
+      } else {
+        alert('ลบงานไม่สำเร็จ');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
     }
-  } catch (error) {
-    console.error(error);
-    alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-  }
-};
+  };
+
   const handleRemoveAssignee = async (targetUserId) => {
     if (!window.confirm('คุณแน่ใจหรือไม่ที่จะเตะผู้รับผิดชอบคนนี้ออก?')) return;
 
@@ -110,7 +128,7 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
 
       if (response.ok && result.success) {
         fetchTaskDetail();
-        onSuccess(); // โหลดข้อมูลใหม่ (ชื่อจะหายไป)
+        onSuccess(); 
       } else {
         alert(result.message || 'คุณไม่มีสิทธิ์เตะผู้ใช้งานคนนี้');
       }
@@ -125,14 +143,58 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
       <div className="bg-[#0A0414] border border-[#301C5E] w-full max-w-4xl h-[85vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden relative">
         
         {/* Header */}
+        {/* 🌟 แก้ไขตรงนี้ให้มีเครื่องหมาย < นำหน้า */}
         <div className="bg-gradient-to-r from-[#1C0D33] to-[#0A0414] border-b border-[#301C5E] p-6 flex justify-between items-start">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-1">
-              <h2 className="text-2xl font-bold text-[#A68CFF]">{taskDetail.title}</h2>
-              <span className="px-3 py-1 bg-[#301C5E] text-xs text-[#D1C4FF] rounded-full uppercase tracking-wider font-bold">
-                {taskDetail.status}
+          
+          {/* 🌟 ฝั่งซ้าย: โซนข้อมูลงาน และคนทำงาน */}
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-3 mb-1">
+              <h2 className="text-2xl font-bold text-white">{taskDetail.title}</h2>
+              
+              {/* ป้ายสถานะ */}
+              <span className={`px-3 py-1 text-[10px] rounded-full uppercase tracking-wider font-bold border ${
+                taskDetail.status === 'todo' ? 'bg-red-900 text-red-300 border-red-500/50' :
+                taskDetail.status === 'doing' ? 'bg-yellow-900 text-yellow-300 border-yellow-500/50' :
+                'bg-green-900 text-green-300 border-green-500/50'
+              }`}>
+                {taskDetail.status === 'todo' ? 'UNPROCESS' : taskDetail.status === 'doing' ? 'ON-PROCESS' : 'FINISH'}
               </span>
+
+              {/* ปุ่มเริ่มทำ (โชว์ฝั่งนี้ให้คนรับผิดชอบ หรือ หัวหน้า กด) */}
+              {taskDetail.status === 'todo' && (isOwnerOrViceHead || taskDetail.assignees?.some(a => a.userId === currentUserId)) && (
+                <button 
+                  onClick={() => handleStatusChange('doing')}
+                  className="text-xs border border-yellow-500/50 text-yellow-400 hover:bg-yellow-500 hover:text-black px-3 py-1.5 rounded-lg font-bold transition-all ml-2"
+                >
+                  ▶️ เริ่มทำ (ON-PROCESS)
+                </button>
+              )}
+              {taskDetail.status === 'doing' && (isOwnerOrViceHead || taskDetail.assignees?.some(a => a.userId === currentUserId)) && (
+                <button 
+                  onClick={() => handleStatusChange('todo')}
+                  className="text-xs border border-gray-500/50 text-gray-400 hover:bg-gray-600 hover:text-white px-3 py-1.5 rounded-lg font-bold transition-all ml-2 shrink-0"
+                >
+                  ⏸️ ยกเลิกการทำ (UNPROCESS)
+                </button>
+              )}
+              {taskDetail.status === 'doing' && isOwnerOrViceHead && (
+              <button 
+                onClick={() => handleStatusChange('done')}
+                className="bg-green-600 hover:bg-green-500 text-white px-5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(34,197,94,0.4)] flex items-center gap-2 whitespace-nowrap"
+              >
+                ✅ อนุมัติจบงาน (FINISH)
+              </button>
+              )}
+              {taskDetail.status === 'done' && isOwnerOrViceHead && (
+                <button 
+                  onClick={() => handleStatusChange('doing')}
+                  className="border border-red-500/50 text-red-400 hover:bg-red-500 hover:text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap"
+                >
+                  🔄 สั่งแก้
+                </button>
+              )}
             </div>
+            {/* กล่องโชว์บรีฟงาน */}
             {(taskDetail.description || taskDetail.fileUrl) && (
               <div className="mt-4 bg-[#0A0414] border border-[#301C5E] p-4 rounded-xl max-w-3xl shadow-inner">
                 {taskDetail.description && (
@@ -150,27 +212,34 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                       rel="noopener noreferrer" 
                       className="inline-flex items-center gap-2 text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-2 rounded-lg border border-[#00FFD1]/20 hover:bg-[#00FFD1]/20 hover:scale-105 transition-all"
                     >
-                      ไฟล์อ้างอิง: {taskDetail.fileName || 'ดาวน์โหลดไฟล์'}
+                      📎 ไฟล์อ้างอิง: {taskDetail.fileName || 'ดาวน์โหลดไฟล์'}
                     </a>
                   </div>
                 )}
               </div>
             )}
-            
           </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={handleDelete}
-              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-              title="ลบงานนี้"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl ml-4 transition-colors">&times;</button>
+
+          {/* 🌟 ฝั่งขวา: โซนอำนาจหัวหน้า (Approve / Delete) */}
+          <div className="flex items-center gap-4 pl-4 border-l border-[#301C5E]/50 ml-4">
+
+            {/* ปุ่มลบงาน (เฉพาะหัวหน้าเห็นอยู่แล้วตามที่เราทำไว้) */}
+            {isOwnerOrViceHead && (
+              <button 
+                onClick={handleDelete}
+                className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                title="ลบงานนี้"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+
+            {/* ปุ่มปิด Modal */}
+            <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl transition-colors ml-2">&times;</button>
+          </div>
         </div>
-      </div>
 
         
 
@@ -222,7 +291,7 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                     type="file" 
                     id="file-upload" 
                     onChange={(e) => setFile(e.target.files[0])} 
-                    className="hidden" // ซ่อน input จริงไว้
+                    className="hidden" 
                   />
                 </label>
                 {/* โชว์ชื่อไฟล์ที่เลือก */}

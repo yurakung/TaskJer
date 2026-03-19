@@ -102,4 +102,11 @@ export class TaskController {
     const fileName = file ? file.originalname : undefined;
     return this.taskService.addMessage(Number(taskId), body.userId, body.text, fileUrl, fileName);
   }
+  @Patch(':taskId/status')
+  updateStatus(
+    @Param('taskId') taskId: string,
+    @Body('status') status: string
+  ) {
+    return this.taskService.updateTaskStatus(Number(taskId), status);
+  }
 }
