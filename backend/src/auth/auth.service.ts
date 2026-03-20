@@ -47,12 +47,11 @@ export class AuthService {
       throw new UnauthorizedException({ success: false, message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });
     }
 
-    // 🚧 ในอนาคตเราจะสร้าง JWT Token ตรงนี้ แต่ตอนนี้จำลองส่ง Token ปลอมไปก่อน
     return { 
       success: true, 
       message: 'เข้าสู่ระบบสำเร็จ!', 
       token: 'mock-jwt-token-12345',
-      user: { id: user.id, name: user.name, role: user.role }
+      user: { id: user.id, name: user.name, role: user.role, avatarUrl: user.avatarUrl }
     };
   }
 }

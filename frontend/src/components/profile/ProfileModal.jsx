@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect} from 'react';
+
 
 export default function ProfileModal({ isOpen, onClose, currentUser }) {
   const [name, setName] = useState(currentUser?.name || '');
@@ -8,6 +9,10 @@ export default function ProfileModal({ isOpen, onClose, currentUser }) {
   const [previewUrl, setPreviewUrl] = useState(currentUser?.avatarUrl || null);
   
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setPreviewUrl(currentUser?.avatarUrl || null);
+}, [currentUser]);
 
   if (!isOpen) return null;
 
@@ -29,27 +34,45 @@ export default function ProfileModal({ isOpen, onClose, currentUser }) {
     }
 
     const formData = new FormData();
-    if (name !== currentUser.name) formData.append('name', name);
+    // 💡 ส่งค่าไปเท่าที่มีการเปลี่ยนแปลง
+    if (name) formData.append('name', name);
     if (password) formData.append('password', password);
     if (file) formData.append('file', file);
 
     try {
       const response = await fetch(`http://localhost:5000/api/users/${currentUser.id}/profile`, {
         method: 'PATCH',
-        body: formData, // ส่งเป็น FormData เพราะมีไฟล์รูป
+        body: formData,
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        // 🌟 อัปเดตข้อมูลใน LocalStorage เพื่อให้หน้าเว็บจำรูป/ชื่อใหม่
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        const updatedUserFromBackend = await response.json();
+        
+        // 1. ดึงข้อมูล User ปัจจุบันจาก LocalStorage
+        const currentData = JSON.parse(localStorage.getItem('user') || '{}');
+        
+        // 2. รวมข้อมูลเก่ากับข้อมูลใหม่ที่ได้จาก Backend
+        // 💡 ใส่ ?t=... หลัง URL รูปภาพเพื่อแก้ปัญหา Browser จำรูปเก่า (Cache)
+        if (updatedUserFromBackend.avatarUrl) {
+           updatedUserFromBackend.avatarUrl = `${updatedUserFromBackend.avatarUrl}?t=${new Date().getTime()}`;
+        }
+
+        const newUserData = { ...currentData, ...updatedUserFromBackend };
+        
+        // 3. เซฟลง LocalStorage
+        localStorage.setItem('user', JSON.stringify(newUserData));
+        
         alert('อัปเดตโปรไฟล์เรียบร้อยแล้ว!');
-        window.location.reload(); // รีเฟรชหน้าเว็บ 1 รอบเพื่ออัปเดต UI ทุกจุด
+        
+        // 4. ปิด Modal ก่อนแล้วค่อยโหลดหน้าใหม่ (เพื่อความเนียน)
+        onClose(); 
+        window.location.reload(); 
       } else {
-        alert('อัปเดตโปรไฟล์ไม่สำเร็จ');
+        const errorData = await response.json();
+        alert(`อัปเดตไม่สำเร็จ: ${errorData.message || 'เกิดข้อผิดพลาด'}`);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Update Error:", error);
       alert('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
     }
   };
@@ -73,11 +96,19 @@ export default function ProfileModal({ isOpen, onClose, currentUser }) {
               className="w-24 h-24 rounded-full border-4 border-[#301C5E] bg-[#1C0D33] flex items-center justify-center text-3xl font-bold text-[#A68CFF] overflow-hidden mb-3 cursor-pointer relative group shadow-[0_0_15px_rgba(123,92,255,0.3)] hover:border-[#7B5CFF] transition-all"
               onClick={() => fileInputRef.current.click()}
             >
-              {previewUrl ? (
-                <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
+            {previewUrl ? (
+            <img 
+                src={
+                previewUrl.startsWith('http') || previewUrl.startsWith('blob:')
+                    ? previewUrl
+                    : `http://localhost:5000${previewUrl}`
+                } 
+                alt="Profile" 
+                className="w-full h-full object-cover" 
+                />
+            ) : (
                 name.charAt(0).toUpperCase()
-              )}
+            )}
               {/* Overlay ตอนเอาเมาส์ชี้ */}
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="text-xs text-white font-bold">เปลี่ยนรูป</span>

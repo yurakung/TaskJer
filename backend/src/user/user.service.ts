@@ -22,7 +22,7 @@ export class UserService {
     return this.prisma.user.update({
       where: { id },
       data: updateData,
-      select: { id: true, email: true, name: true, avatarUrl: true }, // 🔒 ไม่ส่งรหัสผ่านกลับไปเด็ดขาด
+      select: { id: true, email: true, name: true, avatarUrl: true }, 
     });
   }
 }
