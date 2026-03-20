@@ -7,6 +7,7 @@ import InviteMemberModal from '../components/sub-project/InviteMemberModal';
 import ManageTeamModal from '../components/sub-project/ManageTeamModal';
 import TaskWorkspaceModal from '../components/sub-project/TaskWorkspaceModal';
 import ProjectSettingsModal from '../components/project/ProjectSettingsModal';
+import TaskCard from '../components/project/TaskCard';
 
 export default function ProjectDetail() {
   const { id } = useParams(); 
@@ -123,45 +124,7 @@ export default function ProjectDetail() {
       </div>
     );
   }
-
-  // 🌟 ส่วนประกอบการ์ดงาน (TaskCard) สำหรับใช้ในแต่ละคอลัมน์
-  const TaskCard = ({ task }) => {
-    // ลอจิกการเข้าถึงของคุณ
-    const isAssigned = task.assignees?.some(a => a.userId === currentUser.id);
-    const canAccess = isOwnerOrViceHead || isAssigned;
-
-    return (
-      <div 
-        onClick={() => {
-          if (canAccess) {
-            setSelectedTaskId(task.id);
-            setIsWorkspaceOpen(true);
-          }
-        }}
-        className={`bg-[#1C0D33] p-6 rounded-xl border border-[#301C5E] transition-all flex flex-col min-h-[160px] 
-          ${canAccess ? 'group cursor-pointer hover:border-[#7B5CFF]/50 hover:-translate-y-1 shadow-[0_4px_10px_rgba(0,0,0,0.4)]' : 'opacity-40 cursor-not-allowed grayscale'}
-        `}
-      >
-        <div className="flex justify-between items-start mb-4">
-          <p className="text-lg font-bold text-white group-hover:text-[#A68CFF] break-words line-clamp-3 leading-snug">
-            {task.title}
-          </p>
-          {/* ป้ายได้รับมอบหมาย */}
-          {isAssigned && (
-            <span className="text-[10px] bg-[#7B5CFF]/20 text-[#D1C4FF] px-2 py-1 rounded border border-[#7B5CFF]/30 shrink-0 ml-2">
-              ได้รับมอบหมาย
-            </span>
-          )}
-        </div>
-        
-        {/* ชื่อคนรับผิดชอบ */}
-        <div className="flex justify-between items-center text-xs text-gray-400 mt-auto pt-4 border-t border-[#301C5E]/50">
-          <span>Assigned to: {task.assignees?.[0]?.user?.name || 'None'}</span>
-        </div>
-      </div>
-    );
-  };
-
+  
   return (
     <div className="flex min-h-screen bg-[#060411] text-white font-sans overflow-hidden">
       <Sidebar />
@@ -278,92 +241,18 @@ export default function ProjectDetail() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredAndSortedTasks.length > 0 ? (
-              filteredAndSortedTasks.map((task) => {
-                const isAssigned = task.assignees?.some(a => a.userId === currentUser.id);
-                const canAccess = isOwnerOrViceHead || isAssigned;
-
-                // ตั้งค่าสีตามสถานะ
-                let dotColor = 'bg-gray-600';
-                let statusBg = 'bg-[#1C0D33]';
-                let statusTextClass = 'text-gray-500';
-                let statusLabel = task.status;
-
-                if (task.status === 'done') {
-                  dotColor = 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]';
-                  statusBg = 'bg-green-900 border border-green-500/50';
-                  statusTextClass = 'text-green-300';
-                  statusLabel = 'FINISH';
-                } else if (task.status === 'doing') {
-                  dotColor = 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
-                  statusBg = 'bg-yellow-900 border border-yellow-500/50';
-                  statusTextClass = 'text-yellow-300';
-                  statusLabel = 'ON-PROCESS';
-                } else if (task.status === 'todo') {
-                  dotColor = 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]';
-                  statusBg = 'bg-red-900 border border-red-500/50';
-                  statusTextClass = 'text-red-300';
-                  statusLabel = 'UNPROCESS';
-                }
-
-                // ถ้าไม่มีสิทธิ์เข้าถึง ดรอปสีป้ายให้เป็นสีเทา
-                if (!canAccess) {
-                  dotColor = 'bg-gray-600';
-                  statusBg = 'bg-[#1C0D33] border border-[#301C5E]';
-                  statusTextClass = 'text-gray-500';
-                }
-
-                return (
-                  <div 
-                    key={task.id} 
-                    onClick={() => {
-                      if (canAccess) {
-                        setSelectedTaskId(task.id);
-                        setIsWorkspaceOpen(true);
-                      }
-                    }}
-                    className={`bg-[#0A0714] border border-[#1C1438] transition-all rounded-2xl p-6 flex flex-col min-h-[160px] shadow-lg
-                      ${canAccess ? 'hover:border-[#301C5E] cursor-pointer hover:-translate-y-1' : 'opacity-40 cursor-not-allowed grayscale'}
-                    `}
-                  >
-                    {/* Header ของการ์ด: จุดสี (ซ้าย) + ป้ายสถานะ (ขวา) */}
-                    <div className="flex justify-between items-center mb-4">
-                      <div className={`w-5 h-5 rounded-full ${dotColor}`}></div>
-                      <span className={`${statusBg} ${statusTextClass} text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                    
-                    {/* ชื่อ Task ตรงกลาง */}
-                    <div className="flex-1 mt-2">
-                      <h3 className="text-xl font-bold text-gray-200 line-clamp-2 break-words">{task.title}</h3>
-                      {isAssigned && (
-                        <span className="inline-block mt-3 text-[10px] bg-[#7B5CFF]/20 text-[#D1C4FF] px-2 py-1 rounded border border-[#7B5CFF]/30">
-                          ได้รับมอบหมาย
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Footer ของการ์ด: ผู้รับผิดชอบ (ขวาล่าง) */}
-                    <div className="mt-6 pt-4 border-t border-[#1C1438]/50 flex justify-end items-center gap-2">
-                      <span className="text-xs text-gray-400">Assigned to:</span>
-                      {task.assignees?.[0] ? (
-                        <div className="flex items-center gap-2 bg-[#1C0D33] px-2 py-1 rounded-full border border-[#301C5E]">
-                          <div className="w-5 h-5 rounded-full overflow-hidden bg-[#7B5CFF] flex items-center justify-center text-[10px] font-bold text-white">
-                            {task.assignees[0].user?.avatarUrl ? (
-                              <img src={task.assignees[0].user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                            ) : (
-                              task.assignees[0].user?.name?.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-200">{task.assignees[0].user?.name}</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-500 bg-[#1C0D33] px-3 py-1 rounded-full">None</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
+              filteredAndSortedTasks.map((task) => (
+                <TaskCard 
+                  key={task.id} 
+                  task={task} 
+                  currentUserId={currentUser.id} 
+                  isOwnerOrViceHead={isOwnerOrViceHead}
+                  onClick={() => {
+                    setSelectedTaskId(task.id);
+                    setIsWorkspaceOpen(true);
+                  }}
+                />
+              ))
             ) : (
               <div className="col-span-full bg-[#0A0714] border border-[#1C1438] rounded-2xl p-8 text-center text-gray-500">
                 ยังไม่มีงานย่อยในโปรเจคนี้ กดปุ่มสร้างเพื่อเริ่มต้นได้เลย!
