@@ -95,10 +95,10 @@ export class TaskService {
       where: { id: taskId },
       include: {
         assignees: {
-          include: { user: { select: { id: true, name: true, email: true } } }
+          include: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } }
         },
         messages: {
-          include: { user: { select: { id: true, name: true } } },
+          include: { user: { select: { id: true, name: true, avatarUrl: true } } },
           orderBy: { createdAt: 'asc' } // เรียงแชทเก่าไปใหม่ (บนลงล่าง)
         }
       }

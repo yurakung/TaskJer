@@ -328,8 +328,16 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                   taskDetail.assignees.map(a => (
                     <div key={a.id} className="flex justify-between items-center gap-2 text-sm text-gray-300 bg-[#1C0D33] p-2 rounded-lg border border-[#301C5E] group transition-colors hover:border-[#7B5CFF]/50">
                       <div className="flex items-center gap-2 overflow-hidden">
-                        <div className="w-6 h-6 shrink-0 rounded-full bg-[#7B5CFF] flex items-center justify-center text-xs text-white font-bold">
-                          {a.user.name.charAt(0).toUpperCase()}
+                        <div className="w-6 h-6 shrink-0 rounded-full bg-[#7B5CFF] flex items-center justify-center text-xs text-white font-bold overflow-hidden">
+                          {a.user.avatarUrl ? (
+                            <img
+                              src={a.user.avatarUrl}
+                              alt={a.user.name}
+                              className='w-full h-full object-cover '
+                            />
+                          ) : (
+                            a.user.name.charAt(0).toUpperCase()
+                          )}
                         </div>
                         <span className="truncate" title={a.user.name}>{a.user.name}</span>
                       </div>
