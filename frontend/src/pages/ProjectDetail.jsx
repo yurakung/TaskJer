@@ -33,7 +33,8 @@ export default function ProjectDetail() {
       userId: project.userId,
       role: 'Owner',
       user: { 
-        name: isOwner ? `${currentUser.name} (ฉัน)` : 'Project Owner' 
+        name: isOwner ? `${currentUser.name} (ฉัน)` : 'Project Owner',
+        avatarUrl: isOwner ? currentUser.avatarUrl : null 
       }
     });
   }
@@ -178,10 +179,15 @@ export default function ProjectDetail() {
                 {members.map((member) => (
                   <div 
                     key={member.id} 
-                    className="w-10 h-10 rounded-full border-2 border-[#1C0D33] bg-[#7B5CFF] flex items-center justify-center text-sm font-bold text-white shadow-md cursor-pointer hover:-translate-y-1 transition-transform" 
+                    className="w-10 h-10 rounded-full border-2 border-[#1C0D33] bg-[#7B5CFF] flex items-center justify-center text-sm font-bold text-white shadow-md cursor-pointer hover:-translate-y-1 transition-transform overflow-hidden" 
                     title={member.user.email} 
                   >
-                    {member.user.name.charAt(0).toUpperCase()}
+                    {member.user.avatarUrl ?(
+                      <img src={member.user.avatarUrl} alt={member.user.name} className='w-full h-full object-cover'/>
+                    ) :(
+                      member.user.name.charAt(0).toUpperCase()
+                    )}
+                    
                   </div>
                 ))}
               </div>
@@ -287,10 +293,22 @@ export default function ProjectDetail() {
                     </div>
                     
                     {/* Footer ของการ์ด: ผู้รับผิดชอบ (ขวาล่าง) */}
-                    <div className="mt-6 pt-4 border-t border-[#1C1438]/50 text-right">
-                       <span className="text-xs text-gray-400">
-                         Assigned to: {task.assignees?.[0]?.user?.name || 'None'}
-                       </span>
+                    <div className="mt-6 pt-4 border-t border-[#1C1438]/50 flex justify-end items-center gap-2">
+                      <span className="text-xs text-gray-400">Assigned to:</span>
+                      {task.assignees?.[0] ? (
+                        <div className="flex items-center gap-2 bg-[#1C0D33] px-2 py-1 rounded-full border border-[#301C5E]">
+                          <div className="w-5 h-5 rounded-full overflow-hidden bg-[#7B5CFF] flex items-center justify-center text-[10px] font-bold text-white">
+                            {task.assignees[0].user?.avatarUrl ? (
+                              <img src={task.assignees[0].user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              task.assignees[0].user?.name?.charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-200">{task.assignees[0].user?.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500 bg-[#1C0D33] px-3 py-1 rounded-full">None</span>
+                      )}
                     </div>
                   </div>
                 );

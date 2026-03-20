@@ -81,7 +81,7 @@ export class ProjectService {
       where: { projectId: projectId },
       include: {
         user: {
-          select: { id: true, name: true, email: true } // ดึงมาแค่ชื่อกับอีเมล (ไม่ดึงรหัสผ่าน)
+          select: { id: true, name: true, email: true, avatarUrl: true } // ดึงมาแค่ชื่อกับอีเมล (ไม่ดึงรหัสผ่าน)
         }
       }
     });

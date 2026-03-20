@@ -27,7 +27,7 @@ export class TaskService {
         assignees: {
           include: {
             user: {
-              select: { name: true } 
+              select: { name: true, avatarUrl: true } 
             }
           }
         } 
