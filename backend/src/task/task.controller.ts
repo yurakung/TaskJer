@@ -1,6 +1,6 @@
-import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile, Delete, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Patch, UseInterceptors, UploadedFile, UploadedFiles , Delete, Query } from '@nestjs/common';
 import { TaskService } from './task.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
@@ -10,7 +10,7 @@ export class TaskController {
   constructor(private readonly taskService: TaskService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', {
+  @UseInterceptors(FilesInterceptor('files', 10, {
     storage: diskStorage({
       destination: (req, file, cb) => {
         const uploadPath = './uploads';
@@ -27,21 +27,21 @@ export class TaskController {
     @Body('title') title: string,
     @Body('projectId') projectId: string,
     @Body('description') description: string,
-    @UploadedFile() file?: any
+    @UploadedFiles() files?: Array<Express.Multer.File>
   ) {
     if (!title) {
       return { success: false, message: 'ชื่องานหายไป! กรุณาเช็คการส่งข้อมูลจากหน้าเว็บ' };
     }
 
-    const fileUrl = file ? `http://localhost:5000/uploads/${file.filename}` : undefined;
-    const fileName = file ? file.originalname : undefined;
+    const fileUrls = files && files.length > 0 
+      ? files.map(file => `http://localhost:5000/uploads/${file.filename}`) 
+      : [];
 
     return this.taskService.createTask({
       title: title,
       projectId: Number(projectId),
       description: description,
-      fileUrl: fileUrl,
-      fileName: fileName
+      fileUrls: fileUrls,
     });
   }
 

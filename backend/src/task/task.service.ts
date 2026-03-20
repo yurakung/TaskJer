@@ -6,14 +6,13 @@ export class TaskService {
   constructor(private prisma: PrismaService) {}
 
   // ฟังก์ชันสร้างงานย่อยใหม่
-  async createTask(data: { title: string; projectId: number; description?: string; fileUrl?: string; fileName?: string }) {
+  async createTask(data: { title: string; projectId: number; description?: string; fileUrls?: any; fileName?: string }) {
     return this.prisma.task.create({
       data: {
         title: data.title,
         projectId: data.projectId, // ผูกกับโปรเจคที่ส่งมา
         description: data.description, // บันทึกรายละเอียด
-        fileUrl: data.fileUrl,         // บันทึกลิงก์ไฟล์อ้างอิง
-        fileName: data.fileName        // บันทึกชื่อไฟล์อ้างอิง
+        fileUrls: data.fileUrls && data.fileUrls.length > 0 ? data.fileUrls : undefined,         // บันทึกลิงก์ไฟล์อ้างอิง
       },
     });
   }

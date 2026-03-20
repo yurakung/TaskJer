@@ -44,8 +44,8 @@ model Task {
   id          Int      @id @default(autoincrement())
   title       String   // ชื่องานย่อย
   description String?  @db.Text 
-  fileUrl     String?  
-  fileName    String?
+  fileUrl     String?
+  fileUrls     Json? 
   status      String   @default("todo") // สถานะงาน (เช่น todo, doing, done)
   
   // ส่วนที่ผูกว่างานนี้เป็นของโปรเจค ID อะไร

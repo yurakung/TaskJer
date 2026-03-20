@@ -9,7 +9,10 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
   const fetchTaskDetail = async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/tasks/detail/${taskId}`);
-      if (res.ok) setTaskDetail(await res.json());
+      if (res.ok){
+        const data = await res.json();
+        setTaskDetail(data);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -144,10 +147,10 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
         
         {/* Header */}
         {/* 🌟 แก้ไขตรงนี้ให้มีเครื่องหมาย < นำหน้า */}
-        <div className="bg-gradient-to-r from-[#1C0D33] to-[#0A0414] border-b border-[#301C5E] p-6 flex justify-between items-start">
+        <div className="bg-gradient-to-r from-[#1C0D33] to-[#0A0414] border-b border-[#301C5E] p-6 flex justify-between items-start shrink-0">
           
           {/* 🌟 ฝั่งซ้าย: โซนข้อมูลงาน และคนทำงาน */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pr-4">
             <div className="flex flex-wrap items-center gap-3 mb-1">
               <h2 className="text-2xl font-bold text-white">{taskDetail.title}</h2>
               
@@ -195,8 +198,10 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
               )}
             </div>
             {/* กล่องโชว์บรีฟงาน */}
-            {(taskDetail.description || taskDetail.fileUrl) && (
-              <div className="mt-4 bg-[#0A0414] border border-[#301C5E] p-4 rounded-xl max-w-3xl shadow-inner">
+            {(taskDetail.description || (taskDetail.fileUrls && taskDetail.fileUrls.length > 0)) && (
+              <div className="mt-4 bg-[#0A0414] border border-[#301C5E] p-4 rounded-xl max-w-3xl shadow-inner w-full">
+                
+                {/* ส่วนแสดงคำอธิบายงาน (เหมือนเดิมของคุณเลย) */}
                 {taskDetail.description && (
                   <div className="text-sm text-gray-300 whitespace-pre-wrap break-words mb-3 leading-relaxed">
                     <span className="text-xs font-bold text-gray-500 block mb-1">รายละเอียดงาน:</span>
@@ -204,16 +209,28 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
                   </div>
                 )}
                 
-                {taskDetail.fileUrl && (
-                  <div className="pt-2 border-t border-[#301C5E]/50">
-                    <a 
-                      href={taskDetail.fileUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-2 text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-2 rounded-lg border border-[#00FFD1]/20 hover:bg-[#00FFD1]/20 hover:scale-105 transition-all"
-                    >
-                      📎 ไฟล์อ้างอิง: {taskDetail.fileName || 'ดาวน์โหลดไฟล์'}
-                    </a>
+                {/* 🌟 2. ส่วนแสดงไฟล์แนบ (เปลี่ยนเป็นแบบวนลูปสร้างปุ่ม) */}
+                {taskDetail.fileUrls && taskDetail.fileUrls.length > 0 && (
+                  <div className={`pt-3 border-t border-[#301C5E]/50 ${taskDetail.description ? 'mt-4' : ''}`}>
+                    <span className="text-xs font-bold text-gray-500 block mb-2">ไฟล์อ้างอิง (References):</span>
+                    <div className="flex flex-wrap gap-2">
+                      {taskDetail.fileUrls.map((url, index) => {
+                        // ดึงชื่อไฟล์ออกมาจาก URL (ส่วนหลังเครื่องหมาย / ตัวสุดท้าย)
+                        const extractedFileName = url.split('/').pop() || `ไฟล์แนบ ${index + 1}`;
+                        return (
+                          <a 
+                            key={index}
+                            href={url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-2 text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-2 rounded-lg border border-[#00FFD1]/20 hover:bg-[#00FFD1]/20 hover:scale-105 transition-all max-w-[200px]"
+                            title={extractedFileName} // เอาเมาส์ชี้เพื่อดูชื่อเต็ม
+                          >
+                            📎 <span className="truncate">{extractedFileName}</span>
+                          </a>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
@@ -221,7 +238,7 @@ export default function TaskWorkspaceModal({ isOpen, onClose, taskId, projectMem
           </div>
 
           {/* 🌟 ฝั่งขวา: โซนอำนาจหัวหน้า (Approve / Delete) */}
-          <div className="flex items-center gap-4 pl-4 border-l border-[#301C5E]/50 ml-4">
+          <div className="flex items-center gap-4 pl-4 border-l border-[#301C5E]/50 ml-4 shrink-0 sticky top-0 h-fit">
 
             {/* ปุ่มลบงาน (เฉพาะหัวหน้าเห็นอยู่แล้วตามที่เราทำไว้) */}
             {isOwnerOrViceHead && (

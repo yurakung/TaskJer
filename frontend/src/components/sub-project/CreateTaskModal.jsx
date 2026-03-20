@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -16,8 +16,16 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId 
     const formData = new FormData();
     formData.append('title', title);
     formData.append('projectId', Number(projectId));
-    if (description.trim()) formData.append('description', description);
-    if (file) formData.append('file', file);
+    
+    if (description.trim()) {
+      formData.append('description', description);
+    }
+    
+    if (files && files.length > 0) {
+      files.forEach((fileItem) => {
+        formData.append('files', fileItem);
+      });
+    }
     try {
       // ยิงข้อมูลไปหา NestJS ที่เราเพิ่งสร้างเมื่อกี้
       const response = await fetch('http://localhost:5000/api/tasks', {
@@ -28,7 +36,7 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId 
       if (response.ok) {
         setTitle('');
         setDescription('');
-        setFile(null);
+        setFiles([]);
         onSuccess(); // เรียกฟังก์ชันโหลดข้อมูลใหม่
         onClose();   // ปิด Modal
       } else {
@@ -75,18 +83,39 @@ export default function CreateTaskModal({ isOpen, onClose, onSuccess, projectId 
             <label className="text-sm text-gray-400 mb-1 block">ไฟล์อ้างอิง (Reference)</label>
             <div className="flex flex-col gap-2">
               <label className="cursor-pointer bg-[#1C0D33] border border-[#301C5E] hover:border-[#7B5CFF] px-4 py-3 rounded-xl text-sm text-[#A68CFF] transition-colors flex items-center justify-center gap-2">
-                📎 {file ? 'เปลี่ยนไฟล์แนบ' : 'คลิกเพื่อเลือกไฟล์'}
+                📎 {files && files.length > 0 ? 'เปลี่ยนไฟล์แนบ' : 'คลิกเพื่อเลือกไฟล์'}
                 <input 
-                  type="file" 
-                  onChange={(e) => setFile(e.target.files[0])} 
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    const selectedFiles = Array.from(e.target.files);
+                    setFiles(prev => [...prev, ...selectedFiles]);
+                  }} 
                   className="hidden" 
                 />
               </label>
               {/* โชว์ชื่อไฟล์ที่เลือก */}
-              {file && (
-                <span className="text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-1.5 rounded-lg border border-[#00FFD1]/20 truncate">
-                  {file.name}
-                </span>
+              {files && files.length > 0 && (
+                <div className="flex flex-col gap-2 mt-1 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                  {files.map((f, index) => (
+                    <div 
+                      key={index} 
+                      className="flex justify-between items-center text-xs text-[#00FFD1] bg-[#00FFD1]/10 px-3 py-1.5 rounded-lg border border-[#00FFD1]/20 group"
+                    >
+                      <span className="truncate pr-2">{f.name}</span>
+                      
+                      {/* ปุ่มกากบาทสำหรับลบไฟล์ */}
+                      <button 
+                        type="button" 
+                        onClick={() => setFiles(files.filter((_, i) => i !== index))}
+                        className="text-[#00FFD1]/50 hover:text-[#FF5C5C] font-bold text-lg leading-none transition-colors"
+                        title="ลบไฟล์นี้"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
