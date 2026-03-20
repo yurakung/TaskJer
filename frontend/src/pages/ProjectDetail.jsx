@@ -20,6 +20,8 @@ export default function ProjectDetail() {
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all'); 
+  const [assigneeFilter, setAssigneeFilter] = useState('all');
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isOwner = project?.userId === currentUser.id;
   const currentUserMember = members.find(m => m.userId === currentUser.id);
@@ -39,22 +41,33 @@ export default function ProjectDetail() {
     });
   }
 
-  const sortedTasks = [...tasks].sort((a, b) => {
-    // 1. เช็คว่างานนี้เป็นของเราไหม
-    const isAAssigned = a.assignees?.some(assignee => assignee.userId === currentUser.id);
-    const isBAssigned = b.assignees?.some(assignee => assignee.userId === currentUser.id);
+  const filteredAndSortedTasks = [...tasks]
+    .filter(task => {
+      // 1. กรองสถานะ
+      if (statusFilter !== 'all' && task.status !== statusFilter) {
+        return false;
+      }
+      // 2. กรองคนรับผิดชอบ
+      if (assigneeFilter !== 'all') {
+        const isAssigned = task.assignees?.some(a => a.userId.toString() === assigneeFilter);
+        if (!isAssigned) return false;
+      }
+      return true; // ถ้าผ่านเงื่อนไขให้แสดงผล
+    })
+    .sort((a, b) => {
+      // ลอจิกการเรียงลำดับ (เหมือนเดิมของคุณ)
+      const isAAssigned = a.assignees?.some(assignee => assignee.userId === currentUser.id);
+      const isBAssigned = b.assignees?.some(assignee => assignee.userId === currentUser.id);
 
-    // ดันงานของเราขึ้นบนสุด
-    if (isAAssigned && !isBAssigned) return -1;
-    if (!isAAssigned && isBAssigned) return 1;
+      if (isAAssigned && !isBAssigned) return -1;
+      if (!isAAssigned && isBAssigned) return 1;
 
-    // 2. เรียงตามสถานะ: doing (1) -> todo (2) -> done (3)
-    const statusPriority = { doing: 1, todo: 2, done: 3 };
-    const priorityA = statusPriority[a.status] || 99;
-    const priorityB = statusPriority[b.status] || 99;
+      const statusPriority = { doing: 1, todo: 2, done: 3 };
+      const priorityA = statusPriority[a.status] || 99;
+      const priorityB = statusPriority[b.status] || 99;
 
-    return priorityA - priorityB;
-  });
+      return priorityA - priorityB;
+    });
   
   const fetchTasks = async () => {
     try {
@@ -213,6 +226,44 @@ export default function ProjectDetail() {
                   ⚙️ ตั้งค่าโปรเจค
                 </button>
               )}
+              <div className="relative">
+                <select 
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="appearance-none bg-[#1C0D33] text-gray-200 border border-[#301C5E] hover:border-[#7B5CFF] px-4 py-2 pr-10 rounded-xl focus:outline-none transition-colors cursor-pointer text-sm font-medium"
+                >
+                  <option value="all">ALLSTATE</option>
+                  <option value="todo">UNPROCESS</option>
+                  <option value="doing">ON-PROCESS</option>
+                  <option value="done">FINISH</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
+
+              {/* 🌟 Dropdown 2: ตัวกรองคนรับผิดชอบ */}
+              <div className="relative">
+                <select 
+                  value={assigneeFilter}
+                  onChange={(e) => setAssigneeFilter(e.target.value)}
+                  className="appearance-none bg-[#1C0D33] text-gray-200 border border-[#301C5E] hover:border-[#7B5CFF] px-4 py-2 pr-10 rounded-xl focus:outline-none transition-colors cursor-pointer text-sm font-medium"
+                >
+                  <option value="all">👥 ทุกคน</option>
+                  <option value={currentUser.id.toString()}>👤 งานของฉัน</option>
+                  {/* ดึงรายชื่อคนในโปรเจคมาแสดง */}
+                  {allMembersWithOwner
+                    .filter(m => m.userId !== currentUser.id) // ซ่อนชื่อเราออกไป เพราะมีปุ่ม "งานของฉัน" แล้ว
+                    .map(m => (
+                      <option key={m.userId} value={m.userId.toString()}>
+                        {m.user.name}
+                      </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
             </div>
 
           <div className="flex justify-between items-center mb-6">
@@ -226,8 +277,8 @@ export default function ProjectDetail() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedTasks.length > 0 ? (
-              sortedTasks.map((task) => {
+            {filteredAndSortedTasks.length > 0 ? (
+              filteredAndSortedTasks.map((task) => {
                 const isAssigned = task.assignees?.some(a => a.userId === currentUser.id);
                 const canAccess = isOwnerOrViceHead || isAssigned;
 
